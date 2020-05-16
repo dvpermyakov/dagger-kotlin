@@ -19,9 +19,7 @@ object ModuleFunSpec {
     ): TypeSpec {
 
         val moduleClassName = moduleElement.toClassName(processingEnv)
-
-        val returnElement = processingEnv.typeUtils.asElement(methodElement.returnType)
-        val returnClassName = returnElement.toClassName(processingEnv)
+        val returnClassName = methodElement.getReturnElement(processingEnv).toClassName(processingEnv)
 
         val factoryClassName = Factory::class.java.toClassName()
         val parameterizedFactoryClassName = factoryClassName.parameterizedBy(returnClassName)

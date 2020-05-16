@@ -18,6 +18,12 @@ internal fun Element.toClassName(
     return ClassName(packageName, simpleName.toString())
 }
 
+internal fun ExecutableElement.getReturnElement(
+    processingEnv: ProcessingEnvironment
+): Element {
+    return processingEnv.typeUtils.asElement(returnType)
+}
+
 internal fun ExecutableElement.getParametersClassName(
     processingEnv: ProcessingEnvironment
 ): List<ClassName> {

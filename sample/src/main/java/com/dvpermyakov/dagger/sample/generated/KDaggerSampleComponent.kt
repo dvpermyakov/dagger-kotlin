@@ -21,4 +21,8 @@ class KDaggerSampleComponent(
     override fun inject(): SampleViewModel {
         return SampleViewModel(provideRepositoryProvider.get())
     }
+
+    override fun injectAnotherOne(): SampleConfig {
+        return provideConfigProvider.get()
+    }
 }
