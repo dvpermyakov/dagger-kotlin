@@ -14,6 +14,7 @@ sourceSets.main {
 dependencies {
     implementation(kotlin("stdlib"))
     implementation(project(":core"))
+    implementation("javax.inject:javax.inject:1")
     implementation("com.squareup:kotlinpoet:1.5.0")
     implementation("com.google.auto.service:auto-service:1.0-rc4")
     kapt("com.google.auto.service:auto-service:1.0-rc4")
