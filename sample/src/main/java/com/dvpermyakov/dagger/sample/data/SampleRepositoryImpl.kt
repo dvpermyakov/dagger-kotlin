@@ -1,5 +1,9 @@
-package com.dvpermyakov.dagger.sample
+package com.dvpermyakov.dagger.sample.data
 
+import com.dvpermyakov.dagger.sample.domain.SampleConfig
+import com.dvpermyakov.dagger.sample.domain.SampleData
+import com.dvpermyakov.dagger.sample.domain.SampleModel
+import com.dvpermyakov.dagger.sample.domain.SampleRepository
 import javax.inject.Inject
 
 class SampleRepositoryImpl @Inject constructor(

@@ -1,9 +1,9 @@
 package com.dvpermyakov.dagger.sample.generated
 
-import com.dvpermyakov.dagger.sample.SampleConfig
-import com.dvpermyakov.dagger.sample.SampleData
-import com.dvpermyakov.dagger.sample.SampleModule
-import com.dvpermyakov.dagger.sample.SampleRepository
+import com.dvpermyakov.dagger.sample.domain.SampleConfig
+import com.dvpermyakov.dagger.sample.domain.SampleData
+import com.dvpermyakov.dagger.sample.di.SampleModule
+import com.dvpermyakov.dagger.sample.domain.SampleRepository
 import com.dvpermyakov.dagger.utils.Factory
 import javax.inject.Provider
 

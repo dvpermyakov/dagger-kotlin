@@ -17,4 +17,7 @@ dependencies {
     implementation(project(":core"))
     implementation("javax.inject:javax.inject:1")
     kapt(project(":processor"))
+
+    testImplementation("junit:junit:4.13")
+    testImplementation("io.mockk:mockk:1.10.0")
 }

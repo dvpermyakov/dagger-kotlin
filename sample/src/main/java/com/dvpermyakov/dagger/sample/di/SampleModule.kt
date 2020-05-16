@@ -1,7 +1,11 @@
-package com.dvpermyakov.dagger.sample
+package com.dvpermyakov.dagger.sample.di
 
 import com.dvpermyakov.dagger.annotation.Module
 import com.dvpermyakov.dagger.annotation.Provide
+import com.dvpermyakov.dagger.sample.domain.SampleConfig
+import com.dvpermyakov.dagger.sample.domain.SampleData
+import com.dvpermyakov.dagger.sample.domain.SampleRepository
+import com.dvpermyakov.dagger.sample.data.SampleRepositoryImpl
 
 @Module
 class SampleModule {

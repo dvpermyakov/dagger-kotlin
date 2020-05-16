@@ -93,9 +93,4 @@ object ModuleSpec {
         )
         return this
     }
-
-    private data class ParameterData(
-        val typeName: TypeName,
-        val name: String
-    )
 }

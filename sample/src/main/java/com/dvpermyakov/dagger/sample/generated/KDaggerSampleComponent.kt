@@ -1,6 +1,11 @@
 package com.dvpermyakov.dagger.sample.generated
 
-import com.dvpermyakov.dagger.sample.*
+import com.dvpermyakov.dagger.sample.di.SampleComponent
+import com.dvpermyakov.dagger.sample.di.SampleModule
+import com.dvpermyakov.dagger.sample.domain.SampleConfig
+import com.dvpermyakov.dagger.sample.domain.SampleData
+import com.dvpermyakov.dagger.sample.domain.SampleRepository
+import com.dvpermyakov.dagger.sample.presentation.SampleViewModel
 import javax.inject.Provider
 
 class KDaggerSampleComponent(
