@@ -27,8 +27,6 @@ object ModuleSpec {
         val factoryClassName = ClassName(factoryType.packageName, factoryType.simpleName)
         val parameterizedFactoryClassName = factoryClassName.parameterizedBy(returnClassName)
 
-        PropertySpec
-
         return TypeSpec.classBuilder(className)
             .primaryConstructor(
                 FunSpec.constructorBuilder()
