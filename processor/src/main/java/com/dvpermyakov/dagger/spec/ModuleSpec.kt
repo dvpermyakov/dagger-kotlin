@@ -3,6 +3,7 @@ package com.dvpermyakov.dagger.spec
 import com.dvpermyakov.dagger.utils.Factory
 import com.squareup.kotlinpoet.*
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
+import javax.annotation.processing.Generated
 import javax.annotation.processing.ProcessingEnvironment
 import javax.inject.Provider
 import javax.lang.model.element.Element
@@ -49,6 +50,7 @@ object ModuleSpec {
                 }})"
 
         return TypeSpec.classBuilder(className)
+            .addAnnotation(Generated::class.java)
             .setConstructorSpec(moduleClassName, parameters)
             .addSuperinterface(parameterizedFactoryClassName)
             .setGetFunctionSpec(returnClassName, getCodeStatement)
