@@ -6,13 +6,12 @@ import com.dvpermyakov.dagger.sample.SampleModule
 import com.dvpermyakov.dagger.utils.Factory
 import javax.inject.Provider
 
-class SampleModule_provideConfig_Factory(
-    private val module: SampleModule,
-    private val dataProvider: Provider<SampleData>
-) : Factory<SampleConfig> {
+class SampleModule_provideData_Factory(
+    private val module: SampleModule
+) : Factory<SampleData> {
 
-    override fun get(): SampleConfig {
-        return module.provideConfig(dataProvider.get())
+    override fun get(): SampleData {
+        return module.provideData()
     }
 
 }
