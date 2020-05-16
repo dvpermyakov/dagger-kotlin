@@ -1,4 +1,4 @@
-package com.dvpermyakov.dagger.spec
+package com.dvpermyakov.dagger.utils
 
 import com.squareup.kotlinpoet.TypeName
 

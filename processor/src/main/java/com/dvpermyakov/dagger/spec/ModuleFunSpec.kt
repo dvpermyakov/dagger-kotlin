@@ -1,6 +1,6 @@
 package com.dvpermyakov.dagger.spec
 
-import com.dvpermyakov.dagger.utils.Factory
+import com.dvpermyakov.dagger.utils.*
 import com.squareup.kotlinpoet.*
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
 import javax.annotation.processing.Generated
@@ -9,7 +9,7 @@ import javax.inject.Provider
 import javax.lang.model.element.Element
 import javax.lang.model.element.ExecutableElement
 
-object ModuleSpec {
+object ModuleFunSpec {
 
     fun getModuleSpec(
         processingEnv: ProcessingEnvironment,
@@ -18,31 +18,25 @@ object ModuleSpec {
         methodElement: ExecutableElement
     ): TypeSpec {
 
-        val modulePackage = processingEnv.elementUtils.getPackageOf(moduleElement).qualifiedName.toString()
-        val moduleClassName = ClassName(modulePackage, moduleElement.simpleName.toString())
+        val moduleClassName = moduleElement.toClassName(processingEnv)
 
         val returnElement = processingEnv.typeUtils.asElement(methodElement.returnType)
-        val returnPackage = processingEnv.elementUtils.getPackageOf(returnElement).qualifiedName.toString()
-        val returnClassName = ClassName(returnPackage, returnElement.simpleName.toString())
+        val returnClassName = returnElement.toClassName(processingEnv)
 
-        val factoryType = Factory::class.java
-        val factoryClassName = ClassName(factoryType.packageName, factoryType.simpleName)
+        val factoryClassName = Factory::class.java.toClassName()
         val parameterizedFactoryClassName = factoryClassName.parameterizedBy(returnClassName)
 
-        val parameters = methodElement.parameters.map { parameter ->
-            val element = processingEnv.typeUtils.asElement(parameter.asType())
-            val parameterPackage = processingEnv.elementUtils.getPackageOf(element).qualifiedName.toString()
-            val parameterClassName = ClassName(parameterPackage, element.simpleName.toString())
+        val parameters = methodElement
+            .getParametersClassName(processingEnv)
+            .map { parameterClassName ->
+                val providerClassName = Provider::class.java.toClassName()
+                val parameterizedProviderClassName = providerClassName.parameterizedBy(parameterClassName)
 
-            val providerType = Provider::class.java
-            val providerClassName = ClassName(providerType.packageName, providerType.simpleName)
-            val parameterizedProviderClassName = providerClassName.parameterizedBy(parameterClassName)
-
-            ParameterData(
-                typeName = parameterizedProviderClassName,
-                name = element.simpleName.toString().decapitalize() + "Provider"
-            )
-        }
+                ParameterData(
+                    typeName = parameterizedProviderClassName,
+                    name = parameterClassName.simpleName.decapitalize() + "Provider"
+                )
+            }
 
         val getCodeStatement = "return module.${methodElement.simpleName}(" +
                 "${parameters.joinToString(", ") { parameter ->
