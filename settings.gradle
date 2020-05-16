@@ -1,2 +1,5 @@
 rootProject.name = 'dagger-kotlin'
 
+include(":core")
+include(":sample")
+include(":processor")

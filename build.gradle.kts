@@ -1,6 +1,7 @@
 plugins {
     `maven-publish`
     kotlin("jvm") version "1.3.72"
+    kotlin("kapt") version "1.3.72"
 }
 
 repositories {
@@ -13,6 +14,7 @@ sourceSets.main {
 
 dependencies {
     implementation(kotlin("stdlib"))
+    implementation("javax.inject:javax.inject:1")
 
     testImplementation("junit:junit:4.13")
     testImplementation("io.mockk:mockk:1.10.0")
