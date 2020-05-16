@@ -1,5 +1,7 @@
 package com.dvpermyakov.dagger.sample.generated
 
+import SampleRepositoryImpl_Factory
+import com.dvpermyakov.dagger.sample.data.SampleRepositoryImpl
 import com.dvpermyakov.dagger.sample.di.SampleComponent
 import com.dvpermyakov.dagger.sample.di.SampleModule
 import com.dvpermyakov.dagger.sample.domain.SampleConfig
@@ -12,14 +14,27 @@ class KDaggerSampleComponent(
     sampleModule: SampleModule
 ) : SampleComponent {
 
-    private val provideSampleDataProvider: Provider<SampleData> = SampleModule_provideData_Factory(sampleModule)
-    private val provideConfigProvider: Provider<SampleConfig> =
-        SampleModule_provideConfig_Factory(sampleModule, provideSampleDataProvider)
-    private val provideRepositoryProvider: Provider<SampleRepository> =
-        SampleModule_provideSampleRepository_Factory(sampleModule, provideConfigProvider, provideSampleDataProvider)
+
+    // from module
+    private lateinit var provideRepositoryProvider: Provider<SampleRepository>
+    private lateinit var provideSampleDataProvider: Provider<SampleData>
+    private lateinit var provideConfigProvider: Provider<SampleConfig>
+
+    // from inject constructor
+    private lateinit var sampleViewModelProvider: Provider<SampleViewModel>
+    private lateinit var sampleRepositoryImplProvider: Provider<SampleRepositoryImpl>
+
+    init {
+        provideRepositoryProvider = SampleModule_provideSampleRepository_Factory(sampleModule, provideConfigProvider, provideSampleDataProvider)
+        provideSampleDataProvider = SampleModule_provideData_Factory(sampleModule)
+        provideConfigProvider = SampleModule_provideConfig_Factory(sampleModule, provideSampleDataProvider)
+
+        sampleViewModelProvider = SampleViewModel_Factory(provideRepositoryProvider)
+        sampleRepositoryImplProvider = SampleRepositoryImpl_Factory(provideConfigProvider, provideSampleDataProvider)
+    }
 
     override fun inject(): SampleViewModel {
-        return SampleViewModel(provideRepositoryProvider.get())
+        return sampleViewModelProvider.get()
     }
 
     override fun injectAnotherOne(): SampleConfig {
