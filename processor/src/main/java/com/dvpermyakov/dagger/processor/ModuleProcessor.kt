@@ -2,6 +2,7 @@ package com.dvpermyakov.dagger.processor
 
 import com.dvpermyakov.dagger.annotation.Module
 import com.dvpermyakov.dagger.spec.ModuleFunSpec
+import com.dvpermyakov.dagger.utils.getMethodElements
 import com.dvpermyakov.dagger.utils.writeToDaggerKotlin
 import com.google.auto.service.AutoService
 import com.squareup.kotlinpoet.FileSpec
@@ -10,7 +11,6 @@ import javax.annotation.processing.Processor
 import javax.annotation.processing.RoundEnvironment
 import javax.lang.model.SourceVersion
 import javax.lang.model.element.ElementKind
-import javax.lang.model.element.ExecutableElement
 import javax.lang.model.element.TypeElement
 import javax.tools.Diagnostic
 
@@ -38,10 +38,8 @@ class ModuleProcessor : AbstractProcessor() {
                 } else element
             }
             .forEach { element ->
-                element.enclosedElements
-                    .filter { enclosedElement ->
-                        enclosedElement.kind == ElementKind.METHOD
-                    }
+                element
+                    .getMethodElements()
                     .map { methodElement ->
                         val className = "${element.simpleName}_${methodElement.simpleName}_Factory"
                         val fileSpecBuilder = FileSpec.builder("", className)
@@ -50,7 +48,7 @@ class ModuleProcessor : AbstractProcessor() {
                                 processingEnv = processingEnv,
                                 className = className,
                                 moduleElement = element,
-                                methodElement = methodElement as ExecutableElement
+                                methodElement = methodElement
                             )
                         )
 

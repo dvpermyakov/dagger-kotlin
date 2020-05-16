@@ -3,6 +3,7 @@ package com.dvpermyakov.dagger.utils
 import com.squareup.kotlinpoet.ClassName
 import javax.annotation.processing.ProcessingEnvironment
 import javax.lang.model.element.Element
+import javax.lang.model.element.ElementKind
 import javax.lang.model.element.ExecutableElement
 
 internal fun Element.getQualifiedPackageName(
@@ -18,6 +19,16 @@ internal fun Element.toClassName(
     return ClassName(packageName, simpleName.toString())
 }
 
+internal fun Element.getMethodElements(): List<ExecutableElement> {
+    return enclosedElements
+        .filter { enclosedElement ->
+            enclosedElement.kind == ElementKind.METHOD
+        }
+        .map { element ->
+            element as ExecutableElement
+        }
+}
+
 internal fun ExecutableElement.getReturnElement(
     processingEnv: ProcessingEnvironment
 ): Element {
@@ -29,7 +40,6 @@ internal fun ExecutableElement.getParametersClassName(
 ): List<ClassName> {
     return parameters.map { parameter ->
         val parameterElement = processingEnv.typeUtils.asElement(parameter.asType())
-        val parameterPackage = parameterElement.getQualifiedPackageName(processingEnv)
-        ClassName(parameterPackage, parameterElement.simpleName.toString())
+        parameterElement.toClassName(processingEnv)
     }
 }

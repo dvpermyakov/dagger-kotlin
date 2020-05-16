@@ -1,15 +1,16 @@
 package com.dvpermyakov.dagger.spec
 
 import com.dvpermyakov.dagger.annotation.Component
+import com.dvpermyakov.dagger.utils.getMethodElements
 import com.dvpermyakov.dagger.utils.getParametersClassName
 import com.dvpermyakov.dagger.utils.getReturnElement
 import com.dvpermyakov.dagger.utils.toClassName
 import com.squareup.kotlinpoet.*
+import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
 import javax.annotation.processing.Generated
 import javax.annotation.processing.ProcessingEnvironment
+import javax.inject.Provider
 import javax.lang.model.element.Element
-import javax.lang.model.element.ElementKind
-import javax.lang.model.element.ExecutableElement
 import javax.tools.Diagnostic
 
 object ComponentSpec {
@@ -40,27 +41,40 @@ object ComponentSpec {
 
         val typeSpec = TypeSpec.classBuilder(className)
             .addAnnotation(Generated::class.java)
-            .setConstructorSpec(
-                moduleClassName
-            )
+            .setConstructorSpec(moduleClassName)
             .addSuperinterface(componentClassName)
 
-        componentElement.enclosedElements.filter { enclosedElement ->
-            enclosedElement.kind == ElementKind.METHOD
-        }.map { methodElement ->
-            val count = (methodElement as ExecutableElement).getParametersClassName(processingEnv).count()
-            if (count > 0) {
-                processingEnv.messager.printMessage(
-                    Diagnostic.Kind.ERROR,
-                    "Method ${methodElement.simpleName} has $count parameters in interface ${componentClassName.simpleName}. You shouldn't put parameters there."
+        val moduleElement = processingEnv.elementUtils.getAllTypeElements(moduleClassValue).first()
+        moduleElement
+            .getMethodElements()
+            .forEach { methodElement ->
+                val returnTypeElement = methodElement.getReturnElement(processingEnv)
+                val returnClassName = returnTypeElement.toClassName(processingEnv)
+                val providerClassName = Provider::class.java.toClassName().parameterizedBy(returnClassName)
+                typeSpec.addProperty(
+                    PropertySpec.builder(methodElement.simpleName.toString(), providerClassName)
+                        .addModifiers(KModifier.PRIVATE, KModifier.LATEINIT)
+                        .mutable(true)
+                        .build()
                 )
             }
-            typeSpec.addOverrideFunSpec(
-                funName = methodElement.simpleName.toString(),
-                returnTypeName = methodElement.getReturnElement(processingEnv).toClassName(processingEnv),
-                statement = "TODO(\"Not yet implemented\")"
-            )
-        }
+
+        componentElement
+            .getMethodElements()
+            .map { methodElement ->
+                val count = methodElement.getParametersClassName(processingEnv).count()
+                if (count > 0) {
+                    processingEnv.messager.printMessage(
+                        Diagnostic.Kind.ERROR,
+                        "Method ${methodElement.simpleName} has $count parameters in interface ${componentClassName.simpleName}. You shouldn't put parameters there."
+                    )
+                }
+                typeSpec.addOverrideFunSpec(
+                    funName = methodElement.simpleName.toString(),
+                    returnTypeName = methodElement.getReturnElement(processingEnv).toClassName(processingEnv),
+                    statement = "TODO(\"Not yet implemented\")"
+                )
+            }
 
         return typeSpec.build()
     }

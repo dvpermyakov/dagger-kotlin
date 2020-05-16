@@ -1,6 +1,5 @@
 package com.dvpermyakov.dagger.sample.generated
 
-import SampleRepositoryImpl_Factory
 import com.dvpermyakov.dagger.sample.data.SampleRepositoryImpl
 import com.dvpermyakov.dagger.sample.di.SampleComponent
 import com.dvpermyakov.dagger.sample.di.SampleModule
