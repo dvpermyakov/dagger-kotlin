@@ -17,7 +17,7 @@ class SampleModule {
     }
 
     @Provide
-    fun provideSampleRepository(config: SampleConfig, data: SampleData): SampleRepository {
+    fun provideSampleRepository(data: SampleData, config: SampleConfig): SampleRepository {
         return SampleRepositoryImpl(config, data)
     }
 }
