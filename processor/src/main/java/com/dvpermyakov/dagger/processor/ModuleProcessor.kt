@@ -2,9 +2,9 @@ package com.dvpermyakov.dagger.processor
 
 import com.dvpermyakov.dagger.annotation.Module
 import com.dvpermyakov.dagger.spec.ModuleFunSpec
+import com.dvpermyakov.dagger.utils.writeToDaggerKotlin
 import com.google.auto.service.AutoService
 import com.squareup.kotlinpoet.FileSpec
-import java.io.File
 import javax.annotation.processing.AbstractProcessor
 import javax.annotation.processing.Processor
 import javax.annotation.processing.RoundEnvironment
@@ -38,25 +38,25 @@ class ModuleProcessor : AbstractProcessor() {
                 } else element
             }
             .forEach { element ->
-                element.enclosedElements.filter { enclosedElement ->
-                    enclosedElement.kind == ElementKind.METHOD
-                }.map { methodElement ->
-                    val className = "${element.simpleName}_${methodElement.simpleName}_Factory"
-                    val fileSpecBuilder = FileSpec.builder("", className)
-                    fileSpecBuilder.addType(
-                        ModuleFunSpec.getModuleSpec(
-                            processingEnv = processingEnv,
-                            className = className,
-                            moduleElement = element,
-                            methodElement = (methodElement as ExecutableElement)
+                element.enclosedElements
+                    .filter { enclosedElement ->
+                        enclosedElement.kind == ElementKind.METHOD
+                    }
+                    .map { methodElement ->
+                        val className = "${element.simpleName}_${methodElement.simpleName}_Factory"
+                        val fileSpecBuilder = FileSpec.builder("", className)
+                        fileSpecBuilder.addType(
+                            ModuleFunSpec.getModuleSpec(
+                                processingEnv = processingEnv,
+                                className = className,
+                                moduleElement = element,
+                                methodElement = methodElement as ExecutableElement
+                            )
                         )
-                    )
 
-                    fileSpecBuilder.build()
-                }.forEach { fileSpec ->
-                    val file = File("build/dagger-kotlin")
-                    fileSpec.writeTo(file)
-                }
+                        fileSpecBuilder.build()
+                    }
+                    .writeToDaggerKotlin()
             }
 
         return true
