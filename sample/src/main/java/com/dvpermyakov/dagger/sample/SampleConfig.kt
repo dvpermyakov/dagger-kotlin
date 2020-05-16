@@ -1,3 +1,3 @@
 package com.dvpermyakov.dagger.sample
 
-data class SampleConfig(val value: Int)
+data class SampleConfig(val value: SampleData)

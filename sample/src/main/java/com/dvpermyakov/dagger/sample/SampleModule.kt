@@ -7,14 +7,17 @@ import com.dvpermyakov.dagger.annotation.Provide
 class SampleModule {
 
     @Provide
-    fun provideConfig(): SampleConfig {
-        return SampleConfig(10)
+    fun provideConfig(data: SampleData): SampleConfig {
+        return SampleConfig(data)
     }
 
     @Provide
-    fun provideSampleRepository(config: SampleConfig): SampleRepository {
-        return SampleRepositoryImpl(config)
+    fun provideData(): SampleData {
+        return SampleData(10)
     }
 
-
+    @Provide
+    fun provideSampleRepository(config: SampleConfig, data: SampleData): SampleRepository {
+        return SampleRepositoryImpl(config, data)
+    }
 }
