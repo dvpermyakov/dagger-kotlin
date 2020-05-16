@@ -6,7 +6,7 @@ import com.dvpermyakov.dagger.sample.SampleRepository
 import com.dvpermyakov.dagger.utils.Factory
 import javax.inject.Provider
 
-class SampleModule_SampleRepository_Factory(
+class SampleModule_provideSampleRepository_Factory(
     private val module: SampleModule,
     private val configProvider: Provider<SampleConfig>
 ) : Factory<SampleRepository> {

@@ -4,7 +4,7 @@ import com.dvpermyakov.dagger.sample.SampleConfig
 import com.dvpermyakov.dagger.sample.SampleModule
 import com.dvpermyakov.dagger.utils.Factory
 
-class SampleModule_SampleConfig_Factory(
+class SampleModule_provideConfig_Factory(
     private val module: SampleModule
 ) : Factory<SampleConfig> {
 

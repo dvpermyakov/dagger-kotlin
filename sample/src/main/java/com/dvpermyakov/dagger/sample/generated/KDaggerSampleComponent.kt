@@ -7,9 +7,9 @@ class KDaggerSampleComponent(
     sampleModule: SampleModule
 ) : SampleComponent {
 
-    private var provideConfigProvider: Provider<SampleConfig> = SampleModule_SampleConfig_Factory(sampleModule)
+    private var provideConfigProvider: Provider<SampleConfig> = SampleModule_provideConfig_Factory(sampleModule)
     private var provideRepositoryProvider: Provider<SampleRepository> =
-        SampleModule_SampleRepository_Factory(sampleModule, provideConfigProvider)
+        SampleModule_provideSampleRepository_Factory(sampleModule, provideConfigProvider)
 
     override fun inject(): SampleViewModel {
         return SampleViewModel(provideRepositoryProvider.get())
