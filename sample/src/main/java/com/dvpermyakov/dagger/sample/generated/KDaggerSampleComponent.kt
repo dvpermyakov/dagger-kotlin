@@ -14,7 +14,6 @@ class KDaggerSampleComponent(
     sampleModule: SampleModule
 ) : SampleComponent {
 
-
     // from module
     private lateinit var provideRepositoryProvider: Provider<SampleRepository>
     private lateinit var provideSampleDataProvider: Provider<SampleData>
