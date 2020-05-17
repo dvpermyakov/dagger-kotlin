@@ -3,10 +3,8 @@ package com.dvpermyakov.dagger.spec.type
 import com.dvpermyakov.dagger.spec.func.OverrideGetFunSpecFactory
 import com.dvpermyakov.dagger.utils.*
 import com.squareup.kotlinpoet.*
-import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
 import javax.annotation.processing.Generated
 import javax.annotation.processing.ProcessingEnvironment
-import javax.inject.Provider
 import javax.lang.model.element.Element
 import javax.lang.model.element.ExecutableElement
 
@@ -21,20 +19,9 @@ class ModuleFunSpecFactory(
         val moduleClassName = moduleElement.toClassName(processingEnv)
         val returnClassName = methodElement.getReturnElement(processingEnv).toClassName(processingEnv)
 
-        val factoryClassName = Factory::class.java.toClassName()
-        val parameterizedFactoryClassName = factoryClassName.parameterizedBy(returnClassName)
-
         val parameters = methodElement
             .getParametersClassName(processingEnv)
-            .map { parameterClassName ->
-                val providerClassName = Provider::class.java.toClassName()
-                val parameterizedProviderClassName = providerClassName.parameterizedBy(parameterClassName)
-
-                ParameterData(
-                    typeName = parameterizedProviderClassName,
-                    name = parameterClassName.simpleName.decapitalize() + "Provider"
-                )
-            }
+            .map { parameterClassName -> parameterClassName.toProviderParameterData() }
 
         val getCodeStatement = "return module.${methodElement.simpleName}(" +
             "${parameters.joinToString(", ") { parameter ->
@@ -44,8 +31,11 @@ class ModuleFunSpecFactory(
         return TypeSpec.classBuilder(className)
             .addAnnotation(Generated::class.java)
             .setConstructorSpec(moduleClassName, parameters)
-            .addSuperinterface(parameterizedFactoryClassName)
-            .addFunction(OverrideGetFunSpecFactory(returnClassName, getCodeStatement).create())
+            .addSuperinterface(returnClassName.toFactoryClassName())
+            .addFunction(OverrideGetFunSpecFactory(
+                returnTypeName = returnClassName,
+                statement = getCodeStatement
+            ).create())
             .build()
     }
 
