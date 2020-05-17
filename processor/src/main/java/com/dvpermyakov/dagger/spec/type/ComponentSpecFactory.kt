@@ -3,11 +3,9 @@ package com.dvpermyakov.dagger.spec.type
 import com.dvpermyakov.dagger.annotation.Component
 import com.dvpermyakov.dagger.utils.*
 import com.squareup.kotlinpoet.*
-import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
 import javax.annotation.processing.Generated
 import javax.annotation.processing.ProcessingEnvironment
 import javax.inject.Inject
-import javax.inject.Provider
 import javax.lang.model.element.Element
 import javax.tools.Diagnostic
 
@@ -40,7 +38,7 @@ class ComponentSpecFactory(
             .forEach { methodElement ->
                 val returnTypeElement = methodElement.getReturnElement(processingEnv)
                 val returnClassName = returnTypeElement.toClassName(processingEnv)
-                val parameterData = returnClassName.toParameterDataWithProvider()
+                val parameterData = returnClassName.toProviderParameterData()
 
                 typeSpec.addProviderProperty(parameterData)
                 providers.add(returnClassName)
@@ -70,7 +68,7 @@ class ComponentSpecFactory(
                 )
 
                 if (!providers.contains(returnClassName)) {
-                    val parameterData = returnClassName.toParameterDataWithProvider()
+                    val parameterData = returnClassName.toProviderParameterData()
                     typeSpec.addProviderProperty(parameterData)
 
                     val constructorElement = returnTypeElement.getConstructor()
@@ -90,12 +88,6 @@ class ComponentSpecFactory(
         typeSpec.addInitializerBlock(initBlockBuilder.build())
 
         return typeSpec.build()
-    }
-
-    private fun ClassName.toParameterDataWithProvider(): ParameterData {
-        val providerClassName = Provider::class.java.toClassName().parameterizedBy(this)
-        val fieldName = this.simpleName.decapitalize() + "Provider"
-        return ParameterData(providerClassName, fieldName)
     }
 
     private fun TypeSpec.Builder.setConstructorSpec(
