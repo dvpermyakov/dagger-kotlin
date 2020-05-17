@@ -1,4 +1,4 @@
-package com.dvpermyakov.dagger.spec
+package com.dvpermyakov.dagger.spec.type
 
 import com.dvpermyakov.dagger.utils.*
 import com.squareup.kotlinpoet.*
@@ -14,9 +14,9 @@ class ModuleFunSpecFactory(
     private val className: String,
     private val moduleElement: Element,
     private val methodElement: ExecutableElement
-) {
+) : TypeSpecFactory {
 
-    fun create(): TypeSpec {
+    override fun create(): TypeSpec {
         val moduleClassName = moduleElement.toClassName(processingEnv)
         val returnClassName = methodElement.getReturnElement(processingEnv).toClassName(processingEnv)
 

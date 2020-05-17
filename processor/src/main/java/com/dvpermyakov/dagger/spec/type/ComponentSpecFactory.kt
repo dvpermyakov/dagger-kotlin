@@ -1,4 +1,4 @@
-package com.dvpermyakov.dagger.spec
+package com.dvpermyakov.dagger.spec.type
 
 import com.dvpermyakov.dagger.annotation.Component
 import com.dvpermyakov.dagger.utils.getMethodElements
@@ -17,9 +17,9 @@ class ComponentSpecFactory(
     private val processingEnv: ProcessingEnvironment,
     private val className: String,
     private val componentElement: Element
-) {
+) : TypeSpecFactory {
 
-    fun create(): TypeSpec {
+    override fun create(): TypeSpec {
         val componentClassName = componentElement.toClassName(processingEnv)
 
         val componentAnnotation = processingEnv.elementUtils

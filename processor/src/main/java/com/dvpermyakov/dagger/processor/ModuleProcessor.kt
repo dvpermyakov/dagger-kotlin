@@ -1,7 +1,7 @@
 package com.dvpermyakov.dagger.processor
 
 import com.dvpermyakov.dagger.annotation.Module
-import com.dvpermyakov.dagger.spec.ModuleFunSpecFactory
+import com.dvpermyakov.dagger.spec.type.ModuleFunSpecFactory
 import com.dvpermyakov.dagger.utils.getMethodElements
 import com.dvpermyakov.dagger.utils.writeToDaggerKotlin
 import com.google.auto.service.AutoService
