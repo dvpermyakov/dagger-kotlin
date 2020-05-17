@@ -23,15 +23,15 @@ class KDaggerSampleComponent(
 ) : SampleComponent {
 
     // from sampleModule
-    private lateinit var sampleRepositoryProvider: Provider<SampleRepository>
-    private lateinit var sampleDataProvider: Provider<SampleData>
-    private lateinit var sampleConfigProvider: Provider<SampleConfig>
-    private lateinit var transactionRepositoryProvider: Provider<TransactionRepository>
+    private val sampleRepositoryProvider: Provider<SampleRepository>
+    private val sampleDataProvider: Provider<SampleData>
+    private val sampleConfigProvider: Provider<SampleConfig>
+    private val transactionRepositoryProvider: Provider<TransactionRepository>
 
     // from inject constructor
-    private lateinit var sampleViewModelProvider: Provider<SampleViewModel>
-    private lateinit var sampleInteractorProvider: Provider<SampleInteractor>
-    private lateinit var transactionInteractorProvider: Provider<TransactionInteractor>
+    private val sampleViewModelProvider: Provider<SampleViewModel>
+    private val sampleInteractorProvider: Provider<SampleInteractor>
+    private val transactionInteractorProvider: Provider<TransactionInteractor>
 
     init {
         sampleDataProvider = SampleModule_provideData_Factory(sampleModule)
