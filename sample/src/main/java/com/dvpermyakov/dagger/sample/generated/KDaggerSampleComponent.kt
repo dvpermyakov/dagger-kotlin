@@ -31,11 +31,11 @@ class KDaggerSampleComponent(
         sampleRepositoryImplProvider = SampleRepositoryImpl_Factory(provideConfigProvider, provideSampleDataProvider)
     }
 
-    override fun inject(): SampleViewModel {
-        return sampleViewModelProvider.get()
+    override fun getSampleConfig(): SampleConfig {
+        return provideConfigProvider.get()
     }
 
-    override fun injectAnotherOne(): SampleConfig {
-        return provideConfigProvider.get()
+    override fun getSampleViewModel(): SampleViewModel {
+        return sampleViewModelProvider.get()
     }
 }

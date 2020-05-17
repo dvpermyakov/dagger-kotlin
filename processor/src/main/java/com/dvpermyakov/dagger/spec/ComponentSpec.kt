@@ -79,10 +79,12 @@ object ComponentSpec {
                         "Method ${methodElement.simpleName} has $count parameters in interface ${componentClassName.simpleName}. You shouldn't put parameters there."
                     )
                 }
+                val returnTypeElement = methodElement.getReturnElement(processingEnv)
+                val returnClassName = returnTypeElement.toClassName(processingEnv)
                 typeSpec.addOverrideFunSpec(
                     funName = methodElement.simpleName.toString(),
                     returnTypeName = methodElement.getReturnElement(processingEnv).toClassName(processingEnv),
-                    statement = "TODO(\"Not yet implemented\")"
+                    statement = "return ${returnClassName.simpleName.decapitalize()}Provider.get()"
                 )
             }
 

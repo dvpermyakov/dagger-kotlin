@@ -7,8 +7,8 @@ import com.dvpermyakov.dagger.sample.presentation.SampleViewModel
 @Component(module = SampleModule::class)
 interface SampleComponent {
 
-    fun inject(): SampleViewModel
+    fun getSampleViewModel(): SampleViewModel
 
-    fun injectAnotherOne(): SampleConfig
+    fun getSampleConfig(): SampleConfig
 
 }
