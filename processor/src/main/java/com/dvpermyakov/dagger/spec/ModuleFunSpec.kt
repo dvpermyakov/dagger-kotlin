@@ -37,9 +37,9 @@ object ModuleFunSpec {
             }
 
         val getCodeStatement = "return module.${methodElement.simpleName}(" +
-                "${parameters.joinToString(", ") { parameter ->
-                    "${parameter.name}.get()"
-                }})"
+            "${parameters.joinToString(", ") { parameter ->
+                "${parameter.name}.get()"
+            }})"
 
         return TypeSpec.classBuilder(className)
             .addAnnotation(Generated::class.java)
