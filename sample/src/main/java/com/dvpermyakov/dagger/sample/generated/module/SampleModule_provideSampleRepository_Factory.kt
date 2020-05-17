@@ -1,4 +1,4 @@
-package com.dvpermyakov.dagger.sample.generated
+package com.dvpermyakov.dagger.sample.generated.module
 
 import com.dvpermyakov.dagger.sample.domain.SampleConfig
 import com.dvpermyakov.dagger.sample.domain.SampleData

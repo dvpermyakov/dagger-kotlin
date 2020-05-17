@@ -1,6 +1,6 @@
 package com.dvpermyakov.dagger.sample.presentation
 
-import com.dvpermyakov.dagger.sample.domain.SampleRepository
+import com.dvpermyakov.dagger.sample.interactors.SampleInteractor
 import javax.inject.Inject
 
-class SampleViewModel @Inject constructor(val repository: SampleRepository)
+class SampleViewModel @Inject constructor(val interactor: SampleInteractor)
