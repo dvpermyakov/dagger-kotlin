@@ -30,8 +30,8 @@ internal fun Element.getMethodElements(): List<ExecutableElement> {
         }
 }
 
-internal fun Element.getConstructor(): ExecutableElement {
-    return enclosedElements.first { enclosedElement ->
+internal fun Element.getConstructor(): ExecutableElement? {
+    return enclosedElements.firstOrNull { enclosedElement ->
         enclosedElement.kind == ElementKind.CONSTRUCTOR
     } as ExecutableElement
 }

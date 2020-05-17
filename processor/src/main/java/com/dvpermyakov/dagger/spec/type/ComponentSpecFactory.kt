@@ -89,7 +89,7 @@ class ComponentSpecFactory(
             providers.add(className)
 
             val constructorElement = element.getConstructor()
-            val constructorAnnotation = constructorElement.findAnnotation(processingEnv, Inject::class.java)
+            val constructorAnnotation = constructorElement?.findAnnotation(processingEnv, Inject::class.java)
             if (constructorAnnotation != null) {
                 val parameterElements = constructorElement
                     .getParameterElements(processingEnv)

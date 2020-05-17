@@ -6,6 +6,8 @@ import com.dvpermyakov.dagger.sample.domain.SampleConfig
 import com.dvpermyakov.dagger.sample.domain.SampleData
 import com.dvpermyakov.dagger.sample.domain.SampleRepository
 import com.dvpermyakov.dagger.sample.data.SampleRepositoryImpl
+import com.dvpermyakov.dagger.sample.data.TransactionRepositoryImpl
+import com.dvpermyakov.dagger.sample.domain.TransactionRepository
 
 @Module
 class SampleModule {
@@ -23,5 +25,14 @@ class SampleModule {
     @Provide
     fun provideSampleRepository(data: SampleData, config: SampleConfig): SampleRepository {
         return SampleRepositoryImpl(config, data)
+    }
+
+    @Provide
+    fun provideTransactionRepository(
+        data: SampleData,
+        config: SampleConfig,
+        repository: SampleRepository
+    ): TransactionRepository {
+        return TransactionRepositoryImpl(config, data, repository)
     }
 }
