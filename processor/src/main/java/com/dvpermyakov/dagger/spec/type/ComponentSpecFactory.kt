@@ -103,11 +103,10 @@ class ComponentSpecFactory(
     ): TypeSpec.Builder {
         val moduleName = module.simpleName.decapitalize()
         val funSpec = FunSpec.constructorBuilder()
-            .addParameter(moduleName, module, KModifier.PRIVATE)
+            .addParameter(moduleName, module)
             .build()
 
         this.primaryConstructor(funSpec)
-        this.addProperty(PropertySpec.builder(moduleName, module).initializer(moduleName).build())
 
         return this
     }
@@ -117,7 +116,7 @@ class ComponentSpecFactory(
         initializer: String
     ): TypeSpec.Builder {
         this.addProperty(
-            PropertySpec.builder(parameterData.name, parameterData.typeName)
+            PropertySpec.builder(parameterData.name, parameterData.typeName, KModifier.PRIVATE)
                 .initializer(initializer)
                 .build()
         )
