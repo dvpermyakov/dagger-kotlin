@@ -1,5 +1,6 @@
 package com.dvpermyakov.dagger.spec.type
 
+import com.dvpermyakov.dagger.spec.func.OverrideGetFunSpecFactory
 import com.dvpermyakov.dagger.utils.*
 import com.squareup.kotlinpoet.*
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
@@ -44,7 +45,7 @@ class ModuleFunSpecFactory(
             .addAnnotation(Generated::class.java)
             .setConstructorSpec(moduleClassName, parameters)
             .addSuperinterface(parameterizedFactoryClassName)
-            .setGetFunctionSpec(returnClassName, getCodeStatement)
+            .addFunction(OverrideGetFunSpecFactory(returnClassName, getCodeStatement).create())
             .build()
     }
 
@@ -68,20 +69,6 @@ class ModuleFunSpecFactory(
             )
         }
 
-        return this
-    }
-
-    private fun TypeSpec.Builder.setGetFunctionSpec(
-        returnTypeName: TypeName,
-        statement: String
-    ): TypeSpec.Builder {
-        this.addFunction(
-            FunSpec.builder("get")
-                .addModifiers(KModifier.OVERRIDE)
-                .addStatement(statement)
-                .returns(returnTypeName)
-                .build()
-        )
         return this
     }
 }
