@@ -13,14 +13,13 @@ import javax.inject.Provider
 import javax.lang.model.element.Element
 import javax.tools.Diagnostic
 
-object ComponentSpec {
+class ComponentSpecFactory(
+    private val processingEnv: ProcessingEnvironment,
+    private val className: String,
+    private val componentElement: Element
+) {
 
-    fun getComponentSpec(
-        processingEnv: ProcessingEnvironment,
-        className: String,
-        componentElement: Element
-    ): TypeSpec {
-
+    fun create(): TypeSpec {
         val componentClassName = componentElement.toClassName(processingEnv)
 
         val componentAnnotation = processingEnv.elementUtils

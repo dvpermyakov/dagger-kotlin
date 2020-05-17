@@ -9,15 +9,14 @@ import javax.inject.Provider
 import javax.lang.model.element.Element
 import javax.lang.model.element.ExecutableElement
 
-object ModuleFunSpec {
+class ModuleFunSpecFactory(
+    private val processingEnv: ProcessingEnvironment,
+    private val className: String,
+    private val moduleElement: Element,
+    private val methodElement: ExecutableElement
+) {
 
-    fun getModuleSpec(
-        processingEnv: ProcessingEnvironment,
-        className: String,
-        moduleElement: Element,
-        methodElement: ExecutableElement
-    ): TypeSpec {
-
+    fun create(): TypeSpec {
         val moduleClassName = moduleElement.toClassName(processingEnv)
         val returnClassName = methodElement.getReturnElement(processingEnv).toClassName(processingEnv)
 

@@ -1,7 +1,7 @@
 package com.dvpermyakov.dagger.processor
 
 import com.dvpermyakov.dagger.annotation.Module
-import com.dvpermyakov.dagger.spec.ModuleFunSpec
+import com.dvpermyakov.dagger.spec.ModuleFunSpecFactory
 import com.dvpermyakov.dagger.utils.getMethodElements
 import com.dvpermyakov.dagger.utils.writeToDaggerKotlin
 import com.google.auto.service.AutoService
@@ -44,12 +44,12 @@ class ModuleProcessor : AbstractProcessor() {
                         val className = "${element.simpleName}_${methodElement.simpleName}_Factory"
                         val fileSpecBuilder = FileSpec.builder("", className)
                         fileSpecBuilder.addType(
-                            ModuleFunSpec.getModuleSpec(
+                            ModuleFunSpecFactory(
                                 processingEnv = processingEnv,
                                 className = className,
                                 moduleElement = element,
                                 methodElement = methodElement
-                            )
+                            ).create()
                         )
 
                         fileSpecBuilder.build()

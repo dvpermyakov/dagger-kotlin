@@ -1,7 +1,7 @@
 package com.dvpermyakov.dagger.processor
 
 import com.dvpermyakov.dagger.annotation.Component
-import com.dvpermyakov.dagger.spec.ComponentSpec
+import com.dvpermyakov.dagger.spec.ComponentSpecFactory
 import com.dvpermyakov.dagger.utils.writeToDaggerKotlin
 import com.google.auto.service.AutoService
 import com.squareup.kotlinpoet.FileSpec
@@ -40,11 +40,11 @@ class ComponentProcessor : AbstractProcessor() {
                 val className = "KDagger${element.simpleName}"
                 val fileSpecBuilder = FileSpec.builder("", className)
                 fileSpecBuilder.addType(
-                    ComponentSpec.getComponentSpec(
+                    ComponentSpecFactory(
                         processingEnv = processingEnv,
                         className = className,
                         componentElement = element
-                    )
+                    ).create()
                 )
                 fileSpecBuilder.build()
             }
