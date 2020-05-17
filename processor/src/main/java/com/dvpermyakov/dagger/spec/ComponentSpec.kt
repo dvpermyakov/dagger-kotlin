@@ -44,6 +44,8 @@ object ComponentSpec {
             .setConstructorSpec(moduleClassName)
             .addSuperinterface(componentClassName)
 
+        val initBlockBuilder = CodeBlock.builder()
+
         val moduleElement = processingEnv.elementUtils.getAllTypeElements(moduleClassValue).first()
         moduleElement
             .getMethodElements()
@@ -51,13 +53,21 @@ object ComponentSpec {
                 val returnTypeElement = methodElement.getReturnElement(processingEnv)
                 val returnClassName = returnTypeElement.toClassName(processingEnv)
                 val providerClassName = Provider::class.java.toClassName().parameterizedBy(returnClassName)
+                val fieldName = returnClassName.simpleName.decapitalize() + "Provider"
                 typeSpec.addProperty(
-                    PropertySpec.builder(methodElement.simpleName.toString(), providerClassName)
+                    PropertySpec.builder(fieldName, providerClassName)
                         .addModifiers(KModifier.PRIVATE, KModifier.LATEINIT)
                         .mutable(true)
                         .build()
                 )
+
+                val parameters = methodElement.getParametersClassName(processingEnv)
+                val parameterNames = listOf(moduleClassName.simpleName.decapitalize()) + parameters.map { it.simpleName.decapitalize() + "Provider" }
+                val initStatement = "$fieldName = ${moduleClassName.simpleName}_${methodElement.simpleName}_Factory(${parameterNames.joinToString(", ")})"
+                initBlockBuilder.addStatement(initStatement)
             }
+
+        typeSpec.addInitializerBlock(initBlockBuilder.build())
 
         componentElement
             .getMethodElements()
