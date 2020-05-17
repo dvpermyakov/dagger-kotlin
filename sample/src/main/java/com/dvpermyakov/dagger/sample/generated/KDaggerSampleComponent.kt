@@ -1,6 +1,5 @@
 package com.dvpermyakov.dagger.sample.generated
 
-import com.dvpermyakov.dagger.sample.data.SampleRepositoryImpl
 import com.dvpermyakov.dagger.sample.di.SampleComponent
 import com.dvpermyakov.dagger.sample.di.SampleModule
 import com.dvpermyakov.dagger.sample.domain.SampleConfig
@@ -20,7 +19,6 @@ class KDaggerSampleComponent(
 
     // from inject constructor
     private lateinit var sampleViewModelProvider: Provider<SampleViewModel>
-    private lateinit var sampleRepositoryImplProvider: Provider<SampleRepositoryImpl>
 
     init {
         provideRepositoryProvider = SampleModule_provideSampleRepository_Factory(sampleModule, provideConfigProvider, provideSampleDataProvider)
@@ -28,7 +26,6 @@ class KDaggerSampleComponent(
         provideConfigProvider = SampleModule_provideConfig_Factory(sampleModule, provideSampleDataProvider)
 
         sampleViewModelProvider = SampleViewModel_Factory(provideRepositoryProvider)
-        sampleRepositoryImplProvider = SampleRepositoryImpl_Factory(provideConfigProvider, provideSampleDataProvider)
     }
 
     override fun getSampleConfig(): SampleConfig {
