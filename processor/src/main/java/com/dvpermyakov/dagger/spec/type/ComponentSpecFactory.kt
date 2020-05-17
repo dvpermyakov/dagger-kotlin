@@ -15,6 +15,8 @@ class ComponentSpecFactory(
     private val componentElement: Element
 ) : TypeSpecFactory {
 
+    private val providers = mutableSetOf<TypeName>()
+
     override fun create(): TypeSpec {
         val componentClassName = componentElement.toClassName(processingEnv)
 
@@ -24,13 +26,13 @@ class ComponentSpecFactory(
 
         val moduleClassName = moduleClassValue.toClassName()
 
-        val typeSpec = TypeSpec.classBuilder(className)
+        val typeSpecBuilder = TypeSpec.classBuilder(className)
             .addAnnotation(Generated::class.java)
             .setConstructorSpec(moduleClassName)
             .addSuperinterface(componentClassName)
 
         val initBlockBuilder = CodeBlock.builder()
-        val providers = mutableSetOf<TypeName>()
+        providers.clear()
 
         val moduleElement = processingEnv.elementUtils.getAllTypeElements(moduleClassValue).first()
         moduleElement
@@ -40,7 +42,7 @@ class ComponentSpecFactory(
                 val returnClassName = returnTypeElement.toClassName(processingEnv)
                 val parameterData = returnClassName.toProviderParameterData()
 
-                typeSpec.addProviderProperty(parameterData)
+                typeSpecBuilder.addProviderProperty(parameterData)
                 providers.add(returnClassName)
 
                 val parameters = methodElement.getParametersClassName(processingEnv)
@@ -60,34 +62,52 @@ class ComponentSpecFactory(
                     )
                 }
                 val returnTypeElement = methodElement.getReturnElement(processingEnv)
-                val returnClassName = returnTypeElement.toClassName(processingEnv)
-                typeSpec.addOverrideFunSpec(
+                typeSpecBuilder.addOverrideFunSpec(
                     funName = methodElement.simpleName.toString(),
                     returnTypeName = methodElement.getReturnElement(processingEnv).toClassName(processingEnv),
-                    statement = "return ${returnClassName.simpleName.decapitalize()}Provider.get()"
+                    statement = "return ${returnTypeElement.simpleName.toString().decapitalize()}Provider.get()"
                 )
-
-                if (!providers.contains(returnClassName)) {
-                    val parameterData = returnClassName.toProviderParameterData()
-                    typeSpec.addProviderProperty(parameterData)
-
-                    val constructorElement = returnTypeElement.getConstructor()
-                    val constructorAnnotation = constructorElement.findAnnotation(processingEnv, Inject::class.java)
-                    if (constructorAnnotation != null) {
-                        val parameterNames = constructorElement
-                            .getParameterElements(processingEnv)
-                            .map { constructorParameterElement ->
-                                constructorParameterElement.simpleName.toString().decapitalize() + "Provider"
-                            }
-                        val initStatement = "${parameterData.name} = ${returnClassName.simpleName}_Factory(${parameterNames.joinToString(", ")})"
-                        initBlockBuilder.addStatement(initStatement)
-                    }
-                }
+                typeSpecBuilder.addProviderForElement(
+                    element = returnTypeElement,
+                    initBlockBuilder = initBlockBuilder
+                )
             }
 
-        typeSpec.addInitializerBlock(initBlockBuilder.build())
+        typeSpecBuilder.addInitializerBlock(initBlockBuilder.build())
 
-        return typeSpec.build()
+        return typeSpecBuilder.build()
+    }
+
+    private fun TypeSpec.Builder.addProviderForElement(
+        element: Element,
+        initBlockBuilder: CodeBlock.Builder
+    ): TypeSpec.Builder {
+        val className = element.toClassName(processingEnv)
+        if (!providers.contains(className)) {
+            val parameterData = className.toProviderParameterData()
+            addProviderProperty(parameterData)
+            providers.add(className)
+
+            val constructorElement = element.getConstructor()
+            val constructorAnnotation = constructorElement.findAnnotation(processingEnv, Inject::class.java)
+            if (constructorAnnotation != null) {
+                val parameterElements = constructorElement
+                    .getParameterElements(processingEnv)
+
+                parameterElements.forEach { parameterElement ->
+                    addProviderForElement(parameterElement, initBlockBuilder)
+                }
+
+                val parameterNames = parameterElements.map { constructorParameterElement ->
+                    constructorParameterElement.simpleName.toString().decapitalize() + "Provider"
+                }
+
+                val initStatement = "${parameterData.name} = ${className.simpleName}_Factory(${parameterNames.joinToString(", ")})"
+                initBlockBuilder.addStatement(initStatement)
+            }
+        }
+
+        return this
     }
 
     private fun TypeSpec.Builder.setConstructorSpec(
