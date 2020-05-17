@@ -31,7 +31,6 @@ class ComponentSpecFactory(
             .setConstructorSpec(moduleClassName)
             .addSuperinterface(componentClassName)
 
-        val initBlockBuilder = CodeBlock.builder()
         providers.clear()
 
         val moduleElement = processingEnv.elementUtils.getAllTypeElements(moduleClassValue).first()
@@ -42,13 +41,11 @@ class ComponentSpecFactory(
                 val returnClassName = returnTypeElement.toClassName(processingEnv)
                 val parameterData = returnClassName.toProviderParameterData()
 
-                typeSpecBuilder.addProviderProperty(parameterData)
-                providers.add(returnClassName)
-
                 val parameters = methodElement.getParametersClassName(processingEnv)
                 val parameterNames = listOf(moduleClassName.simpleName.decapitalize()) + parameters.map { it.simpleName.decapitalize() + "Provider" }
-                val initStatement = "${parameterData.name} = ${moduleClassName.simpleName}_${methodElement.simpleName}_Factory(${parameterNames.joinToString(", ")})"
-                initBlockBuilder.addStatement(initStatement)
+                val initStatement = "${moduleClassName.simpleName}_${methodElement.simpleName}_Factory(${parameterNames.joinToString(", ")})"
+                typeSpecBuilder.addProviderProperty(parameterData, initStatement)
+                providers.add(returnClassName)
             }
 
         componentElement
@@ -67,27 +64,17 @@ class ComponentSpecFactory(
                     returnTypeName = methodElement.getReturnElement(processingEnv).toClassName(processingEnv),
                     statement = "return ${returnTypeElement.simpleName.toString().decapitalize()}Provider.get()"
                 )
-                typeSpecBuilder.addProviderForElement(
-                    element = returnTypeElement,
-                    initBlockBuilder = initBlockBuilder
-                )
+                typeSpecBuilder.addProviderForElement(returnTypeElement)
             }
-
-        typeSpecBuilder.addInitializerBlock(initBlockBuilder.build())
 
         return typeSpecBuilder.build()
     }
 
     private fun TypeSpec.Builder.addProviderForElement(
-        element: Element,
-        initBlockBuilder: CodeBlock.Builder
+        element: Element
     ): TypeSpec.Builder {
         val className = element.toClassName(processingEnv)
         if (!providers.contains(className)) {
-            val parameterData = className.toProviderParameterData()
-            addProviderProperty(parameterData)
-            providers.add(className)
-
             val constructorElement = element.getConstructor()
             val constructorAnnotation = constructorElement?.findAnnotation(processingEnv, Inject::class.java)
             if (constructorAnnotation != null) {
@@ -95,15 +82,16 @@ class ComponentSpecFactory(
                     .getParameterElements(processingEnv)
 
                 parameterElements.forEach { parameterElement ->
-                    addProviderForElement(parameterElement, initBlockBuilder)
+                    addProviderForElement(parameterElement)
                 }
 
+                val parameterData = className.toProviderParameterData()
+                providers.add(className)
                 val parameterNames = parameterElements.map { constructorParameterElement ->
                     constructorParameterElement.simpleName.toString().decapitalize() + "Provider"
                 }
-
-                val initStatement = "${parameterData.name} = ${className.simpleName}_Factory(${parameterNames.joinToString(", ")})"
-                initBlockBuilder.addStatement(initStatement)
+                val initStatement = "${className.simpleName}_Factory(${parameterNames.joinToString(", ")})"
+                addProviderProperty(parameterData, initStatement)
             }
         }
 
@@ -125,12 +113,12 @@ class ComponentSpecFactory(
     }
 
     private fun TypeSpec.Builder.addProviderProperty(
-        parameterData: ParameterData
+        parameterData: ParameterData,
+        initializer: String
     ): TypeSpec.Builder {
         this.addProperty(
             PropertySpec.builder(parameterData.name, parameterData.typeName)
-                .addModifiers(KModifier.PRIVATE, KModifier.LATEINIT)
-                .mutable(true)
+                .initializer(initializer)
                 .build()
         )
 
