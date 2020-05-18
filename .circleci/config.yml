@@ -3,7 +3,7 @@ jobs:
   build:
     working_directory: ~/code
     docker:
-      - image: circleci/openjdk:9-jdk
+      - image: circleci/openjdk:8-jdk
     environment:
       JVM_OPTS: -Xmx3200m
       TERM: dumb
@@ -18,4 +18,5 @@ jobs:
           paths:
             - ~/.gradle
           key: v1-dependencies-{{ checksum "build.gradle" }}
-      - run: ./gradlew build
+      - run: ./gradlew sample:assemble
+      - run: ./gradlew sample:test
