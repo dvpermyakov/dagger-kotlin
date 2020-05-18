@@ -3,6 +3,7 @@ package com.dvpermyakov.dagger.processor
 import com.dvpermyakov.dagger.annotation.Module
 import com.dvpermyakov.dagger.spec.type.ModuleFunSpecFactory
 import com.dvpermyakov.dagger.utils.getMethodElements
+import com.dvpermyakov.dagger.utils.getReturnElement
 import com.dvpermyakov.dagger.utils.writeToDaggerKotlin
 import com.google.auto.service.AutoService
 import com.squareup.kotlinpoet.FileSpec
@@ -41,7 +42,8 @@ class ModuleProcessor : AbstractProcessor() {
                 element
                     .getMethodElements()
                     .map { methodElement ->
-                        val className = "${element.simpleName}_${methodElement.simpleName}_Factory"
+                        val returnTypeElement = methodElement.getReturnElement(processingEnv)
+                        val className = "${element.simpleName}_${returnTypeElement.simpleName}_Factory"
                         val fileSpecBuilder = FileSpec.builder("", className)
                         fileSpecBuilder.addType(
                             ModuleFunSpecFactory(

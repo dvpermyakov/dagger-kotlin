@@ -43,7 +43,7 @@ class ComponentSpecFactory(
 
                 val parameters = methodElement.getParametersClassName(processingEnv)
                 val parameterNames = listOf(moduleClassName.simpleName.decapitalize()) + parameters.map { it.simpleName.decapitalize() + "Provider" }
-                val initStatement = "${moduleClassName.simpleName}_${methodElement.simpleName}_Factory(${parameterNames.joinToString(", ")})"
+                val initStatement = "${moduleClassName.simpleName}_${returnTypeElement.simpleName}_Factory(${parameterNames.joinToString(", ")})"
                 typeSpecBuilder.addProviderProperty(parameterData, initStatement)
                 providers.add(returnClassName)
             }
