@@ -1,3 +1,5 @@
 package com.dvpermyakov.dagger.sample.domain
 
-data class SampleData(val data: Int)
+data class ProfileModel(
+    val id: String
+)

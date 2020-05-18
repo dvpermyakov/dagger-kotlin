@@ -1,3 +1,5 @@
 package com.dvpermyakov.dagger.sample.domain
 
-interface TransactionRepository
+interface TransactionRepository {
+    fun getTransactions(card: CardModel): List<TransactionModel>
+}
