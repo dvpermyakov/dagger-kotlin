@@ -7,6 +7,7 @@ import javax.annotation.processing.Generated
 import javax.annotation.processing.ProcessingEnvironment
 import javax.inject.Inject
 import javax.lang.model.element.Element
+import javax.lang.model.element.ExecutableElement
 import javax.tools.Diagnostic
 
 class ComponentSpecFactory(
@@ -15,38 +16,42 @@ class ComponentSpecFactory(
     private val componentElement: Element
 ) : TypeSpecFactory {
 
-    private val providers = mutableSetOf<TypeName>()
+    private val componentClassName: ClassName = componentElement.toClassName(processingEnv)
+    private val moduleElement: Element
+    private val moduleClassName: ClassName
 
-    override fun create(): TypeSpec {
-        val componentClassName = componentElement.toClassName(processingEnv)
+    // return type element to method element
+    private val moduleMethodMap = mutableMapOf<Element, ExecutableElement>()
+    private val componentProviders = mutableSetOf<TypeName>()
 
+    init {
         val componentAnnotation = requireNotNull(componentElement.findAnnotation(processingEnv, Component::class.java))
         val componentAnnotationModuleValue = componentAnnotation.elementValues.entries.first().value
         val moduleClassValue = componentAnnotationModuleValue.value.toString()
 
-        val moduleClassName = moduleClassValue.toClassName()
+        moduleClassName = moduleClassValue.toClassName()
+        moduleElement = processingEnv.elementUtils.getAllTypeElements(moduleClassValue).first()
+    }
+
+    override fun create(): TypeSpec {
 
         val typeSpecBuilder = TypeSpec.classBuilder(className)
             .addAnnotation(Generated::class.java)
             .setConstructorSpec(moduleClassName)
             .addSuperinterface(componentClassName)
 
-        providers.clear()
+        val methodElements = moduleElement.getMethodElements()
+        methodElements.forEach { methodElement ->
+            val returnTypeElement = methodElement.getReturnElement(processingEnv)
+            moduleMethodMap[returnTypeElement] = methodElement
+        }
 
-        val moduleElement = processingEnv.elementUtils.getAllTypeElements(moduleClassValue).first()
-        moduleElement
-            .getMethodElements()
-            .forEach { methodElement ->
-                val returnTypeElement = methodElement.getReturnElement(processingEnv)
-                val returnClassName = returnTypeElement.toClassName(processingEnv)
-                val parameterData = returnClassName.toProviderParameterData()
-
-                val parameters = methodElement.getParametersClassName(processingEnv)
-                val parameterNames = listOf(moduleClassName.simpleName.decapitalize()) + parameters.map { it.simpleName.decapitalize() + "Provider" }
-                val initStatement = "${moduleClassName.simpleName}_${returnTypeElement.simpleName}_Factory(${parameterNames.joinToString(", ")})"
-                typeSpecBuilder.addProviderProperty(parameterData, initStatement)
-                providers.add(returnClassName)
-            }
+        componentProviders.clear()
+        methodElements.forEach { methodElement ->
+            typeSpecBuilder.addProviderForElementWithModule(
+                methodElement = methodElement
+            )
+        }
 
         componentElement
             .getMethodElements()
@@ -70,11 +75,39 @@ class ComponentSpecFactory(
         return typeSpecBuilder.build()
     }
 
+    private fun TypeSpec.Builder.addProviderForElementWithModule(
+        methodElement: ExecutableElement
+    ): TypeSpec.Builder {
+        val returnTypeElement = methodElement.getReturnElement(processingEnv)
+        val returnClassName = returnTypeElement.toClassName(processingEnv)
+
+        if (!componentProviders.contains(returnClassName)) {
+            val parameterElements = methodElement.getParameterElements(processingEnv)
+            parameterElements.forEach { parameterElement ->
+                val parameterClassName = parameterElement.toClassName(processingEnv)
+                if (!componentProviders.contains(parameterClassName)) {
+                    addProviderForElementWithModule(
+                        methodElement = requireNotNull(moduleMethodMap[parameterElement])
+                    )
+                }
+            }
+
+            val parameterData = returnClassName.toProviderParameterData()
+            val parameterClassNames = parameterElements.map { it.toClassName(processingEnv) }
+            val parameterNames = listOf(moduleClassName.simpleName.decapitalize()) + parameterClassNames.map { it.simpleName.decapitalize() + "Provider" }
+            val initStatement = "${moduleClassName.simpleName}_${returnTypeElement.simpleName}_Factory(${parameterNames.joinToString(", ")})"
+            addProviderProperty(parameterData, initStatement)
+            componentProviders.add(returnClassName)
+        }
+
+        return this
+    }
+
     private fun TypeSpec.Builder.addProviderForElement(
         element: Element
     ): TypeSpec.Builder {
         val className = element.toClassName(processingEnv)
-        if (!providers.contains(className)) {
+        if (!componentProviders.contains(className)) {
             val constructorElement = element.getConstructor()
             val constructorAnnotation = constructorElement?.findAnnotation(processingEnv, Inject::class.java)
             if (constructorAnnotation != null) {
@@ -86,12 +119,13 @@ class ComponentSpecFactory(
                 }
 
                 val parameterData = className.toProviderParameterData()
-                providers.add(className)
+                componentProviders.add(className)
                 val parameterNames = parameterElements.map { constructorParameterElement ->
                     constructorParameterElement.simpleName.toString().decapitalize() + "Provider"
                 }
                 val initStatement = "${className.simpleName}_Factory(${parameterNames.joinToString(", ")})"
                 addProviderProperty(parameterData, initStatement)
+                componentProviders.add(className)
             }
         }
 
