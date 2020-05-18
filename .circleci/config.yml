@@ -18,5 +18,4 @@ jobs:
           paths:
             - ~/.gradle
           key: v1-dependencies-{{ checksum "build.gradle" }}
-      - run: ./gradlew sample:assemble
-      - run: ./gradlew sample:test
+      - run: ./gradlew sample:assemble sample:test
