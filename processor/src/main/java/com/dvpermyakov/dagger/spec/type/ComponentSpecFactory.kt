@@ -94,9 +94,14 @@ class ComponentSpecFactory(
 
             val parameterData = returnClassName.toProviderParameterData()
             val parameterClassNames = parameterElements.map { it.toClassName(processingEnv) }
-            val parameterNames = listOf(moduleClassName.simpleName.decapitalize()) + parameterClassNames.map { it.simpleName.decapitalize() + "Provider" }
-            val initStatement = "${moduleClassName.simpleName}_${returnTypeElement.simpleName}_Factory(${parameterNames.joinToString(", ")})"
-            addProviderProperty(parameterData, initStatement)
+            val parameterNames =
+                listOf(moduleClassName.simpleName.decapitalize()) + parameterClassNames.map { it.simpleName.decapitalize() + "Provider" }
+            val statementClassName = ClassName(
+                moduleClassName.packageName,
+                "${moduleClassName.simpleName}_${returnTypeElement.simpleName}_Factory"
+            )
+            val statement = "%T(${parameterNames.joinToString(", ")})"
+            addProviderProperty(parameterData, statement, statementClassName)
             componentProviders.add(returnClassName)
         }
 
@@ -123,8 +128,9 @@ class ComponentSpecFactory(
                 val parameterNames = parameterElements.map { constructorParameterElement ->
                     constructorParameterElement.simpleName.toString().decapitalize() + "Provider"
                 }
-                val initStatement = "${className.simpleName}_Factory(${parameterNames.joinToString(", ")})"
-                addProviderProperty(parameterData, initStatement)
+                val statementClassName = ClassName(className.packageName, "${className.simpleName}_Factory")
+                val statement = "%T(${parameterNames.joinToString(", ")})"
+                addProviderProperty(parameterData, statement, statementClassName)
                 componentProviders.add(className)
             }
         }
@@ -147,11 +153,12 @@ class ComponentSpecFactory(
 
     private fun TypeSpec.Builder.addProviderProperty(
         parameterData: ParameterData,
-        initializer: String
+        initializer: String,
+        initializerClassName: ClassName
     ): TypeSpec.Builder {
         this.addProperty(
             PropertySpec.builder(parameterData.name, parameterData.typeName, KModifier.PRIVATE)
-                .initializer(initializer)
+                .initializer(initializer, initializerClassName)
                 .build()
         )
 
