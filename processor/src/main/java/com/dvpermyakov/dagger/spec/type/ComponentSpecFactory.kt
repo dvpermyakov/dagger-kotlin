@@ -27,10 +27,12 @@ class ComponentSpecFactory(
     override fun create(): TypeSpec {
 
         val moduleElements = getModuleElements()
+        val moduleClassNames = moduleElements.map { it.toClassName(processingEnv) }
 
         val typeSpecBuilder = TypeSpec.classBuilder(className)
             .addAnnotation(Generated::class.java)
-            .setConstructorSpec(moduleElements.map { it.toClassName(processingEnv) })
+            .setConstructorSpec(moduleClassNames)
+            .setFactoryCompanionObjectSpec(moduleClassNames)
             .addSuperinterface(componentClassName)
 
         moduleElements.forEach { moduleElement ->
@@ -150,7 +152,7 @@ class ComponentSpecFactory(
     private fun TypeSpec.Builder.setConstructorSpec(
         moduleClassNames: List<ClassName>
     ): TypeSpec.Builder {
-        val funSpecBuilder = FunSpec.constructorBuilder()
+        val funSpecBuilder = FunSpec.constructorBuilder().addModifiers(KModifier.PRIVATE)
 
         moduleClassNames.forEach { moduleClassName ->
             val moduleName = moduleClassName.simpleName.decapitalize()
@@ -158,6 +160,25 @@ class ComponentSpecFactory(
         }
 
         this.primaryConstructor(funSpecBuilder.build())
+
+        return this
+    }
+
+    private fun TypeSpec.Builder.setFactoryCompanionObjectSpec(
+        moduleClassNames: List<ClassName>
+    ): TypeSpec.Builder {
+        val statement = "return $className(%s)"
+            .format(List(moduleClassNames.size) { "%T()" }.joinToString(", "))
+        val createFunSpec = FunSpec.builder("create")
+            .returns(componentClassName)
+            .addStatement(statement, *moduleClassNames.toTypedArray())
+            .build()
+
+        val companionSpec = TypeSpec.companionObjectBuilder()
+            .addFunction(createFunSpec)
+            .build()
+
+        this.addType(companionSpec)
 
         return this
     }
