@@ -66,7 +66,7 @@ class ComponentSpecFactory(
                 val returnTypeElement = methodElement.getReturnElement(processingEnv)
                 typeSpecBuilder.addOverrideFunSpec(
                     funName = methodElement.simpleName.toString(),
-                    returnTypeName = methodElement.getReturnElement(processingEnv).toClassName(processingEnv),
+                    returnTypeName = returnTypeElement.toClassName(processingEnv),
                     statement = "return ${returnTypeElement.simpleName.toString().decapitalize()}Provider.get()"
                 )
                 typeSpecBuilder.addProviderForElement(returnTypeElement)
