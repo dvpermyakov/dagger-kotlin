@@ -1,7 +1,7 @@
 package com.dvpermyakov.dagger.sample
 
-import com.dvpermyakov.dagger.sample.di.KDaggerMainComponent
-import com.dvpermyakov.dagger.sample.di.MainModule
+import com.dvpermyakov.dagger.sample.di.component.KDaggerMainComponent
+import com.dvpermyakov.dagger.sample.di.modules.MainModule
 import com.dvpermyakov.dagger.sample.domain.TransactionModel
 import org.junit.Assert
 import org.junit.Test

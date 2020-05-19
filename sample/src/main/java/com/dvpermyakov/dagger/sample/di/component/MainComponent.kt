@@ -1,6 +1,7 @@
-package com.dvpermyakov.dagger.sample.di
+package com.dvpermyakov.dagger.sample.di.component
 
 import com.dvpermyakov.dagger.annotation.Component
+import com.dvpermyakov.dagger.sample.di.modules.MainModule
 import com.dvpermyakov.dagger.sample.domain.GlobalConfig
 import com.dvpermyakov.dagger.sample.presentation.TransactionViewModel
 
