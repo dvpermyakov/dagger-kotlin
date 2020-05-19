@@ -3,9 +3,11 @@ package com.dvpermyakov.dagger.spec.type
 import com.dvpermyakov.dagger.annotation.Component
 import com.dvpermyakov.dagger.utils.*
 import com.squareup.kotlinpoet.*
+import java.lang.IllegalStateException
 import javax.annotation.processing.Generated
 import javax.annotation.processing.ProcessingEnvironment
 import javax.inject.Inject
+import javax.lang.model.element.AnnotationValue
 import javax.lang.model.element.Element
 import javax.lang.model.element.ExecutableElement
 import javax.tools.Diagnostic
@@ -17,8 +19,8 @@ class ComponentSpecFactory(
 ) : TypeSpecFactory {
 
     private val componentClassName: ClassName = componentElement.toClassName(processingEnv)
-    private val moduleElement: Element
-    private val moduleClassName: ClassName
+    private lateinit var moduleElement: Element
+    private lateinit var moduleClassName: ClassName
 
     // return type element to method element
     private val moduleMethodMap = mutableMapOf<Element, ExecutableElement>()
@@ -26,11 +28,12 @@ class ComponentSpecFactory(
 
     init {
         val componentAnnotation = requireNotNull(componentElement.findAnnotation(processingEnv, Component::class.java))
-        val componentAnnotationModuleValue = componentAnnotation.elementValues.entries.first().value
-        val moduleClassValue = componentAnnotationModuleValue.value.toString()
-
-        moduleClassName = moduleClassValue.toClassName()
-        moduleElement = processingEnv.elementUtils.getAllTypeElements(moduleClassValue).first()
+        val componentAnnotationModulesValue = componentAnnotation.elementValues.entries.first().value
+        (componentAnnotationModulesValue.value as? List<*>)?.let { moduleList ->
+            val moduleClassValue = (moduleList.first() as AnnotationValue).value.toString()
+            moduleClassName = moduleClassValue.toClassName()
+            moduleElement = processingEnv.elementUtils.getAllTypeElements(moduleClassValue).first()
+        } ?: throw IllegalStateException("${Component::class.java} element should contain a module list")
     }
 
     override fun create(): TypeSpec {

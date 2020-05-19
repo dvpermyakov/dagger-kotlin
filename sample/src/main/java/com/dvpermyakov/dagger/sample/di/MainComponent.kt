@@ -4,7 +4,7 @@ import com.dvpermyakov.dagger.annotation.Component
 import com.dvpermyakov.dagger.sample.domain.GlobalConfig
 import com.dvpermyakov.dagger.sample.presentation.TransactionViewModel
 
-@Component(module = MainModule::class)
+@Component(modules = [MainModule::class])
 interface MainComponent {
 
     fun getSampleViewModel(): TransactionViewModel
