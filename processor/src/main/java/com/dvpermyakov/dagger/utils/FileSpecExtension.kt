@@ -1,11 +1,12 @@
 package com.dvpermyakov.dagger.utils
 
 import com.squareup.kotlinpoet.FileSpec
-import java.io.File
+import javax.annotation.processing.ProcessingEnvironment
 
-fun List<FileSpec>.writeToDaggerKotlin() {
+fun List<FileSpec>.writeToDaggerKotlin(
+    processingEnv: ProcessingEnvironment
+) {
     forEach { fileSpec ->
-        val file = File("build/generated/source/kapt/main")
-        fileSpec.writeTo(file)
+        fileSpec.writeTo(processingEnv.filer)
     }
 }

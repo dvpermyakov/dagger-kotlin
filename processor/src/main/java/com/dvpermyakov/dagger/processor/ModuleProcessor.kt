@@ -3,6 +3,7 @@ package com.dvpermyakov.dagger.processor
 import com.dvpermyakov.dagger.annotation.Module
 import com.dvpermyakov.dagger.spec.type.ModuleFunSpecFactory
 import com.dvpermyakov.dagger.utils.getMethodElements
+import com.dvpermyakov.dagger.utils.getQualifiedPackageName
 import com.dvpermyakov.dagger.utils.getReturnElement
 import com.dvpermyakov.dagger.utils.writeToDaggerKotlin
 import com.google.auto.service.AutoService
@@ -42,9 +43,15 @@ class ModuleProcessor : AbstractProcessor() {
                 element
                     .getMethodElements()
                     .map { methodElement ->
+                        processingEnv.messager.printMessage(
+                            Diagnostic.Kind.NOTE,
+                            "process module method ${methodElement.simpleName}"
+                        )
+
                         val returnTypeElement = methodElement.getReturnElement(processingEnv)
                         val className = "${element.simpleName}_${returnTypeElement.simpleName}_Factory"
-                        val fileSpecBuilder = FileSpec.builder("", className)
+                        val fileSpecBuilder =
+                            FileSpec.builder(element.getQualifiedPackageName(processingEnv), className)
                         fileSpecBuilder.addType(
                             ModuleFunSpecFactory(
                                 processingEnv = processingEnv,
@@ -56,7 +63,7 @@ class ModuleProcessor : AbstractProcessor() {
 
                         fileSpecBuilder.build()
                     }
-                    .writeToDaggerKotlin()
+                    .writeToDaggerKotlin(processingEnv)
             }
 
         return true

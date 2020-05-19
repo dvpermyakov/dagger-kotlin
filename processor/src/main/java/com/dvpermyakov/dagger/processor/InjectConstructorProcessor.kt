@@ -1,6 +1,7 @@
 package com.dvpermyakov.dagger.processor
 
 import com.dvpermyakov.dagger.spec.type.InjectConstructorSpecFactory
+import com.dvpermyakov.dagger.utils.getQualifiedPackageName
 import com.dvpermyakov.dagger.utils.writeToDaggerKotlin
 import com.google.auto.service.AutoService
 import com.squareup.kotlinpoet.FileSpec
@@ -38,8 +39,13 @@ class InjectConstructorProcessor : AbstractProcessor() {
             }
             .map { element ->
                 val classElement = element.enclosingElement
+                processingEnv.messager.printMessage(
+                    Diagnostic.Kind.NOTE,
+                    "process constructor of ${classElement.simpleName}"
+                )
+
                 val className = "${classElement.simpleName}_Factory"
-                val fileSpecBuilder = FileSpec.builder("", className)
+                val fileSpecBuilder = FileSpec.builder(element.getQualifiedPackageName(processingEnv), className)
                 fileSpecBuilder.addType(
                     InjectConstructorSpecFactory(
                         processingEnv = processingEnv,
@@ -50,7 +56,7 @@ class InjectConstructorProcessor : AbstractProcessor() {
 
                 fileSpecBuilder.build()
             }
-            .writeToDaggerKotlin()
+            .writeToDaggerKotlin(processingEnv)
 
         return true
     }

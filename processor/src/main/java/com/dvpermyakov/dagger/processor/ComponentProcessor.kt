@@ -2,6 +2,7 @@ package com.dvpermyakov.dagger.processor
 
 import com.dvpermyakov.dagger.annotation.Component
 import com.dvpermyakov.dagger.spec.type.ComponentSpecFactory
+import com.dvpermyakov.dagger.utils.getQualifiedPackageName
 import com.dvpermyakov.dagger.utils.writeToDaggerKotlin
 import com.google.auto.service.AutoService
 import com.squareup.kotlinpoet.FileSpec
@@ -34,11 +35,17 @@ class ComponentProcessor : AbstractProcessor() {
                         "Only interfaces can be annotated with @${Component::class.simpleName}"
                     )
                     null
-                } else element
+                } else {
+                    processingEnv.messager.printMessage(
+                        Diagnostic.Kind.NOTE,
+                        "process component ${element.simpleName}"
+                    )
+                    element
+                }
             }
             .map { element ->
                 val className = "KDagger${element.simpleName}"
-                val fileSpecBuilder = FileSpec.builder("", className)
+                val fileSpecBuilder = FileSpec.builder(element.getQualifiedPackageName(processingEnv), className)
                 fileSpecBuilder.addType(
                     ComponentSpecFactory(
                         processingEnv = processingEnv,
@@ -48,7 +55,7 @@ class ComponentProcessor : AbstractProcessor() {
                 )
                 fileSpecBuilder.build()
             }
-            .writeToDaggerKotlin()
+            .writeToDaggerKotlin(processingEnv)
 
         return true
     }
