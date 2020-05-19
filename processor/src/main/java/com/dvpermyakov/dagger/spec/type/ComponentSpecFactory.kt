@@ -20,7 +20,6 @@ class ComponentSpecFactory(
 
     private val componentClassName: ClassName = componentElement.toClassName(processingEnv)
     private lateinit var moduleElement: Element
-    private lateinit var moduleClassName: ClassName
 
     // return type element to method element
     private val moduleMethodMap = mutableMapOf<Element, ExecutableElement>()
@@ -31,7 +30,6 @@ class ComponentSpecFactory(
         val componentAnnotationModulesValue = componentAnnotation.elementValues.entries.first().value
         (componentAnnotationModulesValue.value as? List<*>)?.let { moduleList ->
             val moduleClassValue = (moduleList.first() as AnnotationValue).value.toString()
-            moduleClassName = moduleClassValue.toClassName()
             moduleElement = processingEnv.elementUtils.getAllTypeElements(moduleClassValue).first()
         } ?: throw IllegalStateException("${Component::class.java} element should contain a module list")
     }
@@ -40,7 +38,7 @@ class ComponentSpecFactory(
 
         val typeSpecBuilder = TypeSpec.classBuilder(className)
             .addAnnotation(Generated::class.java)
-            .setConstructorSpec(moduleClassName)
+            .setConstructorSpec(moduleElement.toClassName(processingEnv))
             .addSuperinterface(componentClassName)
 
         val methodElements = moduleElement.getMethodElements()
@@ -81,6 +79,7 @@ class ComponentSpecFactory(
     private fun TypeSpec.Builder.addProviderForElementWithModule(
         methodElement: ExecutableElement
     ): TypeSpec.Builder {
+        val moduleClassName = moduleElement.toClassName(processingEnv)
         val returnTypeElement = methodElement.getReturnElement(processingEnv)
         val returnClassName = returnTypeElement.toClassName(processingEnv)
 
