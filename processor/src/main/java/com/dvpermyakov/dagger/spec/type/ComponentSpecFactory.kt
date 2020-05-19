@@ -19,39 +19,35 @@ class ComponentSpecFactory(
 ) : TypeSpecFactory {
 
     private val componentClassName: ClassName = componentElement.toClassName(processingEnv)
-    private lateinit var moduleElement: Element
 
     // return type element to method element
     private val moduleMethodMap = mutableMapOf<Element, ExecutableElement>()
     private val componentProviders = mutableSetOf<TypeName>()
 
-    init {
-        val componentAnnotation = requireNotNull(componentElement.findAnnotation(processingEnv, Component::class.java))
-        val componentAnnotationModulesValue = componentAnnotation.elementValues.entries.first().value
-        (componentAnnotationModulesValue.value as? List<*>)?.let { moduleList ->
-            val moduleClassValue = (moduleList.first() as AnnotationValue).value.toString()
-            moduleElement = processingEnv.elementUtils.getAllTypeElements(moduleClassValue).first()
-        } ?: throw IllegalStateException("${Component::class.java} element should contain a module list")
-    }
-
     override fun create(): TypeSpec {
+
+        val moduleElements = getModuleElements()
 
         val typeSpecBuilder = TypeSpec.classBuilder(className)
             .addAnnotation(Generated::class.java)
-            .setConstructorSpec(moduleElement.toClassName(processingEnv))
+            .setConstructorSpec(moduleElements.map { it.toClassName(processingEnv) })
             .addSuperinterface(componentClassName)
 
-        val methodElements = moduleElement.getMethodElements()
-        methodElements.forEach { methodElement ->
-            val returnTypeElement = methodElement.getReturnElement(processingEnv)
-            moduleMethodMap[returnTypeElement] = methodElement
+        moduleElements.forEach { moduleElement ->
+            moduleElement.getMethodElements().forEach { methodElement ->
+                val returnTypeElement = methodElement.getReturnElement(processingEnv)
+                moduleMethodMap[returnTypeElement] = methodElement
+            }
         }
 
         componentProviders.clear()
-        methodElements.forEach { methodElement ->
-            typeSpecBuilder.addProviderForElementWithModule(
-                methodElement = methodElement
-            )
+        moduleElements.forEach { moduleElement ->
+            moduleElement.getMethodElements().forEach { methodElement ->
+                typeSpecBuilder.addProviderForElementWithModule(
+                    methodElement = methodElement,
+                    moduleElement = moduleElement
+                )
+            }
         }
 
         componentElement
@@ -76,8 +72,18 @@ class ComponentSpecFactory(
         return typeSpecBuilder.build()
     }
 
+    private fun getModuleElements(): List<Element> {
+        val componentAnnotation = requireNotNull(componentElement.findAnnotation(processingEnv, Component::class.java))
+        val componentAnnotationModulesValue = componentAnnotation.elementValues.entries.first().value
+        return (componentAnnotationModulesValue.value as? List<*>)?.map { annotationValue ->
+            val moduleClassValue = (annotationValue as AnnotationValue).value.toString()
+            processingEnv.elementUtils.getAllTypeElements(moduleClassValue).first()
+        } ?: throw IllegalStateException("${Component::class.java} element should contain a module list")
+    }
+
     private fun TypeSpec.Builder.addProviderForElementWithModule(
-        methodElement: ExecutableElement
+        methodElement: ExecutableElement,
+        moduleElement: Element
     ): TypeSpec.Builder {
         val moduleClassName = moduleElement.toClassName(processingEnv)
         val returnTypeElement = methodElement.getReturnElement(processingEnv)
@@ -89,7 +95,8 @@ class ComponentSpecFactory(
                 val parameterClassName = parameterElement.toClassName(processingEnv)
                 if (!componentProviders.contains(parameterClassName)) {
                     addProviderForElementWithModule(
-                        methodElement = requireNotNull(moduleMethodMap[parameterElement])
+                        methodElement = requireNotNull(moduleMethodMap[parameterElement]),
+                        moduleElement = moduleElement
                     )
                 }
             }
@@ -141,14 +148,16 @@ class ComponentSpecFactory(
     }
 
     private fun TypeSpec.Builder.setConstructorSpec(
-        module: ClassName
+        moduleClassNames: List<ClassName>
     ): TypeSpec.Builder {
-        val moduleName = module.simpleName.decapitalize()
-        val funSpec = FunSpec.constructorBuilder()
-            .addParameter(moduleName, module)
-            .build()
+        val funSpecBuilder = FunSpec.constructorBuilder()
 
-        this.primaryConstructor(funSpec)
+        moduleClassNames.forEach { moduleClassName ->
+            val moduleName = moduleClassName.simpleName.decapitalize()
+            funSpecBuilder.addParameter(moduleName, moduleClassName)
+        }
+
+        this.primaryConstructor(funSpecBuilder.build())
 
         return this
     }
