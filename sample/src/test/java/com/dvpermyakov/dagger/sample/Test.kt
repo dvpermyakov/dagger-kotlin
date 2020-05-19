@@ -1,6 +1,6 @@
 package com.dvpermyakov.dagger.sample
 
-import KDaggerMainComponent
+import com.dvpermyakov.dagger.sample.di.MainComponentFactory
 import com.dvpermyakov.dagger.sample.di.MainModule
 import com.dvpermyakov.dagger.sample.domain.TransactionModel
 import org.junit.Assert
@@ -10,7 +10,7 @@ class Test {
 
     @Test
     fun listOfTransactions() {
-        val component = KDaggerMainComponent(mainModule = MainModule())
+        val component = MainComponentFactory.create(module = MainModule())
         val viewModel = component.getSampleViewModel()
         val transactions = viewModel.findAllTransactions()
         Assert.assertEquals(
