@@ -16,8 +16,12 @@ internal fun Element.getQualifiedPackageName(
 internal fun Element.toClassName(
     processingEnv: ProcessingEnvironment
 ): ClassName {
+    val name = if (enclosingElement.kind in setOf(ElementKind.CLASS, ElementKind.INTERFACE)) {
+        "${enclosingElement.simpleName}.$simpleName"
+    } else simpleName.toString()
+
     val packageName = getQualifiedPackageName(processingEnv)
-    return ClassName(packageName, simpleName.toString())
+    return ClassName(packageName, name)
 }
 
 internal fun Element.getMethodElements(): List<ExecutableElement> {
