@@ -1,8 +1,9 @@
 package com.dvpermyakov.dagger.sample.data
 
 import com.dvpermyakov.dagger.sample.domain.*
+import javax.inject.Inject
 
-class CardRepositoryImpl(
+class CardRepositoryImpl @Inject constructor(
     private val config: GlobalConfig,
     private val profile: ProfileModel
 ) : CardRepository {
