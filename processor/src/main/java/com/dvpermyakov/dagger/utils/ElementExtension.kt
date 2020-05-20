@@ -6,6 +6,13 @@ import javax.lang.model.element.AnnotationMirror
 import javax.lang.model.element.Element
 import javax.lang.model.element.ElementKind
 import javax.lang.model.element.ExecutableElement
+import javax.lang.model.type.TypeMirror
+
+internal fun TypeMirror.toElement(
+    processingEnv: ProcessingEnvironment
+): Element {
+    return processingEnv.typeUtils.asElement(this)
+}
 
 internal fun Element.getQualifiedPackageName(
     processingEnv: ProcessingEnvironment
@@ -31,6 +38,13 @@ internal fun Element.getMethodElements(): List<ExecutableElement> {
         }
         .map { element ->
             element as ExecutableElement
+        }
+}
+
+internal fun Element.getFieldElements(): List<Element> {
+    return enclosedElements
+        .filter { enclosedElement ->
+            enclosedElement.kind == ElementKind.FIELD
         }
 }
 
@@ -61,7 +75,7 @@ internal fun Element.getConstructor(): ExecutableElement? {
 
 internal fun ExecutableElement.getReturnElement(
     processingEnv: ProcessingEnvironment
-): Element {
+): Element? {
     return processingEnv.typeUtils.asElement(returnType)
 }
 

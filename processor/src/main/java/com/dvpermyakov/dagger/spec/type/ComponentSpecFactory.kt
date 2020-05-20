@@ -66,7 +66,7 @@ class ComponentSpecFactory(
         moduleElements
             .forEach { moduleElement ->
                 moduleElement.getMethodElements().forEach { methodElement ->
-                    val returnTypeElement = methodElement.getReturnElement(processingEnv)
+                    val returnTypeElement = requireNotNull(methodElement.getReturnElement(processingEnv))
                     moduleMethodMap[returnTypeElement] = methodElement
                 }
             }
@@ -97,19 +97,45 @@ class ComponentSpecFactory(
             .getMethodElements()
             .map { methodElement ->
                 val count = methodElement.getParametersClassName(processingEnv).count()
-                if (count > 0) {
-                    processingEnv.messager.printMessage(
-                        Diagnostic.Kind.ERROR,
-                        "Method ${methodElement.simpleName} has $count parameters in interface ${componentClassName.simpleName}. You shouldn't put parameters there."
+                val returnTypeElement = methodElement.getReturnElement(processingEnv)
+                if (count == 0 && returnTypeElement != null) {
+                    typeSpecBuilder.addFunction(
+                        FunSpec.builder(methodElement.simpleName.toString())
+                            .addModifiers(KModifier.OVERRIDE)
+                            .addStatement(
+                                "return ${returnTypeElement.simpleName.toString().decapitalize()}Provider.get()"
+                            )
+                            .returns(returnTypeElement.toClassName(processingEnv))
+                            .build()
+                    )
+                    typeSpecBuilder.addProviderForElement(returnTypeElement)
+                } else {
+                    val parameterTypeElement = methodElement.parameters.first()
+                    val parameterElement = parameterTypeElement.asType().toElement(processingEnv)
+                    val parameterClassName = parameterElement.toClassName(processingEnv)
+                    val parameterName = parameterTypeElement.simpleName.toString().decapitalize()
+                    val fieldElements = parameterElement.getFieldElements().filter { fieldElement ->
+                        val annotation = fieldElement.findAnnotation(processingEnv, Inject::class.java)
+                        annotation != null
+                    }
+                    typeSpecBuilder.addFunction(
+                        FunSpec.builder(methodElement.simpleName.toString())
+                            .addModifiers(KModifier.OVERRIDE)
+                            .addParameter(parameterName, parameterClassName)
+                            .addCode(buildCodeBlock {
+                                fieldElements.forEach { fieldElement ->
+                                    val fieldTypeElement = fieldElement.asType().toElement(processingEnv)
+                                    val fieldTypeClassName = fieldTypeElement.toClassName(processingEnv)
+                                    if (!componentProviders.contains(fieldTypeClassName)) {
+                                        typeSpecBuilder.addProviderForElement(fieldTypeElement)
+                                    }
+                                    val fieldTypeProvider = "${fieldTypeClassName.simpleName.decapitalize()}Provider"
+                                    addStatement("$parameterName.${fieldElement.simpleName} = $fieldTypeProvider.get()")
+                                }
+                            })
+                            .build()
                     )
                 }
-                val returnTypeElement = methodElement.getReturnElement(processingEnv)
-                typeSpecBuilder.addOverrideFunSpec(
-                    funName = methodElement.simpleName.toString(),
-                    returnTypeName = returnTypeElement.toClassName(processingEnv),
-                    statement = "return ${returnTypeElement.simpleName.toString().decapitalize()}Provider.get()"
-                )
-                typeSpecBuilder.addProviderForElement(returnTypeElement)
             }
 
         return typeSpecBuilder.build()
@@ -129,7 +155,7 @@ class ComponentSpecFactory(
         moduleElement: Element
     ): TypeSpec.Builder {
         val moduleClassName = moduleElement.toClassName(processingEnv)
-        val returnTypeElement = methodElement.getReturnElement(processingEnv)
+        val returnTypeElement = requireNotNull(methodElement.getReturnElement(processingEnv))
         val returnClassName = returnTypeElement.toClassName(processingEnv)
 
         if (!componentProviders.contains(returnClassName)) {
@@ -164,7 +190,7 @@ class ComponentSpecFactory(
         methodElement: ExecutableElement,
         moduleElement: Element
     ): TypeSpec.Builder {
-        val returnTypeElement = methodElement.getReturnElement(processingEnv)
+        val returnTypeElement = requireNotNull(methodElement.getReturnElement(processingEnv))
         val returnTypeClassName = returnTypeElement.toClassName(processingEnv)
 
         val parameterElement = methodElement.getParameterElements(processingEnv).first()
@@ -303,21 +329,6 @@ class ComponentSpecFactory(
                 .build()
         )
 
-        return this
-    }
-
-    private fun TypeSpec.Builder.addOverrideFunSpec(
-        funName: String,
-        returnTypeName: TypeName,
-        statement: String
-    ): TypeSpec.Builder {
-        this.addFunction(
-            FunSpec.builder(funName)
-                .addModifiers(KModifier.OVERRIDE)
-                .addStatement(statement)
-                .returns(returnTypeName)
-                .build()
-        )
         return this
     }
 }
