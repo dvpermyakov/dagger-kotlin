@@ -2,6 +2,7 @@ package com.dvpermyakov.dagger.sample.di.component
 
 import com.dvpermyakov.dagger.annotation.BindsInstance
 import com.dvpermyakov.dagger.annotation.Component
+import com.dvpermyakov.dagger.sample.data.DatabaseConfig
 import com.dvpermyakov.dagger.sample.data.NetworkConfig
 import com.dvpermyakov.dagger.sample.di.modules.DatabaseModule
 import com.dvpermyakov.dagger.sample.di.modules.MainModule
@@ -18,8 +19,9 @@ interface MainComponent {
 
     @Component.Factory
     interface Factory {
-        fun create(
-            @BindsInstance networkConfig: NetworkConfig
+        fun createNewInstance(
+            @BindsInstance networkConfig: NetworkConfig,
+            @BindsInstance databaseConfig: DatabaseConfig
         ): MainComponent
     }
 }

@@ -55,7 +55,12 @@ class ComponentSpecFactory(
 
         typeSpecBuilder
             .setConstructorSpec(moduleClassNamesExcludeInterfaces, bindsInstanceClassNames)
-            .setFactoryCompanionObjectSpec(moduleClassNamesExcludeInterfaces, bindsInstanceClassNames)
+            .setFactoryCompanionObjectSpec(
+                factoryInterfaceElement = factoryInterfaceElement,
+                factoryMethodElement = factoryCreateFunction,
+                moduleClassNames = moduleClassNamesExcludeInterfaces,
+                bindsInstanceClassNames = bindsInstanceClassNames
+            )
             .addSuperinterface(componentClassName)
 
         moduleElements
@@ -236,6 +241,8 @@ class ComponentSpecFactory(
     }
 
     private fun TypeSpec.Builder.setFactoryCompanionObjectSpec(
+        factoryInterfaceElement: Element?,
+        factoryMethodElement: Element?,
         moduleClassNames: List<ClassName>,
         bindsInstanceClassNames: List<ClassName>
     ): TypeSpec.Builder {
@@ -256,22 +263,31 @@ class ComponentSpecFactory(
         val statementCode = (modulesStatement + bindsStatement).joinToString(", ")
         val statement = "return $className(%s)".format(statementCode)
 
-        val createFunSpec = FunSpec.builder("create")
-            .addParameters(
-                bindsInstanceClassNames.map { bindsInstanceClassName ->
-                    val bindsInstanceName = bindsInstanceClassName.simpleName.decapitalize()
-                    ParameterSpec.builder(bindsInstanceName, bindsInstanceClassName).build()
-                }
-            )
-            .returns(componentClassName)
-            .addStatement(statement, *moduleClassNames.toTypedArray())
-            .build()
+        val bindsParameters = bindsInstanceClassNames.map { bindsInstanceClassName ->
+            val bindsInstanceName = bindsInstanceClassName.simpleName.decapitalize()
+            ParameterSpec.builder(bindsInstanceName, bindsInstanceClassName).build()
+        }
+        val createFunSpec = if (factoryMethodElement != null) {
+            FunSpec.builder(factoryMethodElement.simpleName.toString())
+                .addParameters(bindsParameters)
+                .addModifiers(KModifier.OVERRIDE)
+                .returns(componentClassName)
+                .addStatement(statement, *moduleClassNames.toTypedArray())
+                .build()
+        } else {
+            FunSpec.builder("create")
+                .addParameters(bindsParameters)
+                .returns(componentClassName)
+                .addStatement(statement, *moduleClassNames.toTypedArray())
+                .build()
+        }
 
-        val companionSpec = TypeSpec.companionObjectBuilder()
-            .addFunction(createFunSpec)
-            .build()
+        val companionSpecBuilder = TypeSpec.companionObjectBuilder().addFunction(createFunSpec)
+        if (factoryInterfaceElement != null) {
+            companionSpecBuilder.addSuperinterface(factoryInterfaceElement.toClassName(processingEnv))
+        }
 
-        this.addType(companionSpec)
+        this.addType(companionSpecBuilder.build())
 
         return this
     }
