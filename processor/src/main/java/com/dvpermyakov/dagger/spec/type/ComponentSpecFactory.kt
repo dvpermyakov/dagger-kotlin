@@ -3,7 +3,7 @@ package com.dvpermyakov.dagger.spec.type
 import com.dvpermyakov.dagger.annotation.Component
 import com.dvpermyakov.dagger.utils.*
 import com.squareup.kotlinpoet.*
-import java.lang.IllegalStateException
+import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
 import javax.annotation.processing.Generated
 import javax.annotation.processing.ProcessingEnvironment
 import javax.inject.Inject
@@ -25,14 +25,33 @@ class ComponentSpecFactory(
     private val componentProviders = mutableSetOf<TypeName>()
 
     override fun create(): TypeSpec {
+        componentProviders.clear()
+
+        val typeSpecBuilder = TypeSpec.classBuilder(className)
+            .addAnnotation(Generated::class.java)
+
+        val factoryInterfaceElement = componentElement
+            .getNestedInterfaces()
+            .firstOrNull { interfaceElement ->
+                val annotation = interfaceElement.findAnnotation(processingEnv, Component.Factory::class.java)
+                annotation != null
+            }
+        val factoryCreateFunction = factoryInterfaceElement
+            ?.getMethodElements()
+            ?.firstOrNull { methodElement ->
+                val returnTypeElement = methodElement.getReturnElement(processingEnv)
+                returnTypeElement == componentElement
+            }
+        val bindsInstanceElements = factoryCreateFunction?.getParameterElements(processingEnv) ?: emptyList()
+        val bindsInstanceClassNames = bindsInstanceElements.map { it.toClassName(processingEnv) }
+
 
         val moduleElements = getModuleElements()
         val moduleClassNames = moduleElements.map { it.toClassName(processingEnv) }
 
-        val typeSpecBuilder = TypeSpec.classBuilder(className)
-            .addAnnotation(Generated::class.java)
-            .setConstructorSpec(moduleClassNames)
-            .setFactoryCompanionObjectSpec(moduleClassNames)
+        typeSpecBuilder
+            .setConstructorSpec(moduleClassNames, bindsInstanceClassNames)
+            .setFactoryCompanionObjectSpec(moduleClassNames, bindsInstanceClassNames)
             .addSuperinterface(componentClassName)
 
         moduleElements.forEach { moduleElement ->
@@ -150,7 +169,8 @@ class ComponentSpecFactory(
     }
 
     private fun TypeSpec.Builder.setConstructorSpec(
-        moduleClassNames: List<ClassName>
+        moduleClassNames: List<ClassName>,
+        bindsInstanceClassNames: List<ClassName>
     ): TypeSpec.Builder {
         val funSpecBuilder = FunSpec.constructorBuilder().addModifiers(KModifier.PRIVATE)
 
@@ -159,17 +179,44 @@ class ComponentSpecFactory(
             funSpecBuilder.addParameter(moduleName, moduleClassName)
         }
 
+        bindsInstanceClassNames.forEach { bindsInstanceClassName ->
+            val bindsInstanceName = bindsInstanceClassName.simpleName.decapitalize()
+            funSpecBuilder.addParameter(bindsInstanceName, bindsInstanceClassName)
+        }
+
         this.primaryConstructor(funSpecBuilder.build())
 
         return this
     }
 
     private fun TypeSpec.Builder.setFactoryCompanionObjectSpec(
-        moduleClassNames: List<ClassName>
+        moduleClassNames: List<ClassName>,
+        bindsInstanceClassNames: List<ClassName>
     ): TypeSpec.Builder {
-        val statement = "return $className(%s)"
-            .format(List(moduleClassNames.size) { "%T()" }.joinToString(", "))
+
+        bindsInstanceClassNames.forEach { bindsInstanceClassName ->
+            val parameterData = bindsInstanceClassName.toProviderParameterData()
+            val statement = "%T(${bindsInstanceClassName.simpleName.decapitalize()})"
+            val containerTypeName = ContainerProvider::class.java.toClassName().parameterizedBy(bindsInstanceClassName)
+            addProviderProperty(
+                parameterData,
+                statement,
+                containerTypeName
+            )
+        }
+
+        val bindsStatement = bindsInstanceClassNames.map { it.simpleName.decapitalize() }
+        val modulesStatement = List(moduleClassNames.size) { "%T()" }
+        val statementCode = (modulesStatement + bindsStatement).joinToString(", ")
+        val statement = "return $className(%s)".format(statementCode)
+
         val createFunSpec = FunSpec.builder("create")
+            .addParameters(
+                bindsInstanceClassNames.map { bindsInstanceClassName ->
+                    val bindsInstanceName = bindsInstanceClassName.simpleName.decapitalize()
+                    ParameterSpec.builder(bindsInstanceName, bindsInstanceClassName).build()
+                }
+            )
             .returns(componentClassName)
             .addStatement(statement, *moduleClassNames.toTypedArray())
             .build()
@@ -186,11 +233,11 @@ class ComponentSpecFactory(
     private fun TypeSpec.Builder.addProviderProperty(
         parameterData: ParameterData,
         initializer: String,
-        initializerClassName: ClassName
+        initializerTypeName: TypeName
     ): TypeSpec.Builder {
         this.addProperty(
             PropertySpec.builder(parameterData.name, parameterData.typeName, KModifier.PRIVATE)
-                .initializer(initializer, initializerClassName)
+                .initializer(initializer, initializerTypeName)
                 .build()
         )
 

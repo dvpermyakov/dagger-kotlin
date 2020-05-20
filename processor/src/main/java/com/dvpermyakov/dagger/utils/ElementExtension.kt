@@ -30,6 +30,13 @@ internal fun Element.getMethodElements(): List<ExecutableElement> {
         }
 }
 
+internal fun Element.getNestedInterfaces(): List<Element> {
+    return enclosedElements
+        .filter { enclosedElement ->
+            enclosedElement.kind == ElementKind.INTERFACE
+        }
+}
+
 internal fun Element.getConstructor(): ExecutableElement? {
     return enclosedElements.firstOrNull { enclosedElement ->
         enclosedElement.kind == ElementKind.CONSTRUCTOR
