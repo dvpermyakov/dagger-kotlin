@@ -14,7 +14,7 @@ class ModuleBindFunSpecFactory(
 ) : TypeSpecFactory {
 
     override fun create(): TypeSpec {
-        val returnClassName = methodElement.getReturnElement(processingEnv).toClassName(processingEnv)
+        val returnClassName = requireNotNull(methodElement.getReturnElement(processingEnv)).toClassName(processingEnv)
 
         val parameterClassName = methodElement
             .getParametersClassName(processingEnv)

@@ -17,7 +17,7 @@ class ModuleProvideFunSpecFactory(
 
     override fun create(): TypeSpec {
         val moduleClassName = moduleElement.toClassName(processingEnv)
-        val returnClassName = methodElement.getReturnElement(processingEnv).toClassName(processingEnv)
+        val returnClassName = requireNotNull(methodElement.getReturnElement(processingEnv)).toClassName(processingEnv)
 
         val parameters = methodElement
             .getParametersClassName(processingEnv)
@@ -32,10 +32,12 @@ class ModuleProvideFunSpecFactory(
             .addAnnotation(Generated::class.java)
             .setConstructorSpec(moduleClassName, parameters)
             .addSuperinterface(returnClassName.toFactoryClassName())
-            .addFunction(OverrideGetFunSpecFactory(
-                returnTypeName = returnClassName,
-                statement = getCodeStatement
-            ).create())
+            .addFunction(
+                OverrideGetFunSpecFactory(
+                    returnTypeName = returnClassName,
+                    statement = getCodeStatement
+                ).create()
+            )
             .build()
     }
 

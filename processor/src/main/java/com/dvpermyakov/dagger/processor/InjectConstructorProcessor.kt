@@ -28,14 +28,8 @@ class InjectConstructorProcessor : AbstractProcessor() {
 
     override fun process(annotations: MutableSet<out TypeElement>, roundEnv: RoundEnvironment): Boolean {
         roundEnv.getElementsAnnotatedWith(Inject::class.java)
-            .mapNotNull { element ->
-                if (element.kind != ElementKind.CONSTRUCTOR) {
-                    processingEnv.messager.printMessage(
-                        Diagnostic.Kind.ERROR,
-                        "Only constructors can be annotated with @${Inject::class.simpleName}"
-                    )
-                    null
-                } else element
+            .filter { element ->
+                element.kind == ElementKind.CONSTRUCTOR
             }
             .map { element ->
                 val classElement = element.enclosingElement
