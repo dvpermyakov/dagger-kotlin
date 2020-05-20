@@ -6,4 +6,8 @@ import kotlin.reflect.KClass
 @Retention(AnnotationRetention.RUNTIME)
 annotation class Component(
     val modules: Array<KClass<*>>
-)
+) {
+    @Target(AnnotationTarget.CLASS)
+    @Retention(AnnotationRetention.RUNTIME)
+    annotation class Factory
+}

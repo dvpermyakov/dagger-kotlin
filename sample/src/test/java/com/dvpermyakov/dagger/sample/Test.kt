@@ -1,8 +1,7 @@
 package com.dvpermyakov.dagger.sample
 
+import com.dvpermyakov.dagger.sample.data.NetworkConfig
 import com.dvpermyakov.dagger.sample.di.component.KDaggerMainComponent
-import com.dvpermyakov.dagger.sample.di.modules.DatabaseModule
-import com.dvpermyakov.dagger.sample.di.modules.MainModule
 import com.dvpermyakov.dagger.sample.domain.TransactionModel
 import org.junit.Assert
 import org.junit.Test
@@ -11,7 +10,8 @@ class Test {
 
     @Test
     fun listOfTransactions() {
-        val component = KDaggerMainComponent(MainModule(), DatabaseModule())
+        val networkConfig = NetworkConfig()
+        val component = KDaggerMainComponent.create(networkConfig)
         val viewModel = component.getSampleViewModel()
         val transactions = viewModel.findAllTransactions()
         Assert.assertEquals(
