@@ -9,6 +9,7 @@ import javax.annotation.processing.ProcessingEnvironment
 import javax.inject.Inject
 import javax.lang.model.element.AnnotationValue
 import javax.lang.model.element.Element
+import javax.lang.model.element.ElementKind
 import javax.lang.model.element.ExecutableElement
 import javax.tools.Diagnostic
 
@@ -47,7 +48,13 @@ class ComponentSpecFactory(
 
 
         val moduleElements = getModuleElements()
-        val moduleClassNames = moduleElements.map { it.toClassName(processingEnv) }
+        val moduleClassNames = moduleElements
+            .filter { element ->
+                element.kind != ElementKind.INTERFACE
+            }
+            .map { element ->
+                element.toClassName(processingEnv)
+            }
 
         typeSpecBuilder
             .setConstructorSpec(moduleClassNames, bindsInstanceClassNames)
