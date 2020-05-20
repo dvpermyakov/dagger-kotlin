@@ -14,7 +14,7 @@ import com.dvpermyakov.dagger.sample.presentation.TransactionViewModel
 @Component(modules = [MainModule::class, DatabaseModule::class, RepositoryModule::class])
 interface MainComponent {
 
-    fun getSampleViewModel(): TransactionViewModel
+    fun getTransactionViewModel(): TransactionViewModel
 
     fun getSampleConfig(): GlobalConfig
 
