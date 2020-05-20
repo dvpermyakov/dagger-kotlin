@@ -11,7 +11,10 @@ import com.dvpermyakov.dagger.sample.domain.GlobalConfig
 import com.dvpermyakov.dagger.sample.presentation.TransactionView
 import com.dvpermyakov.dagger.sample.presentation.TransactionViewModel
 
-@Component(modules = [MainModule::class, DatabaseModule::class, RepositoryModule::class])
+@Component(
+    modules = [MainModule::class, DatabaseModule::class, RepositoryModule::class],
+    dependencies = []
+)
 interface MainComponent {
 
     fun getTransactionViewModel(): TransactionViewModel
