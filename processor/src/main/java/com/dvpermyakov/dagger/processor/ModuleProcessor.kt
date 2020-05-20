@@ -1,7 +1,7 @@
 package com.dvpermyakov.dagger.processor
 
 import com.dvpermyakov.dagger.annotation.Module
-import com.dvpermyakov.dagger.spec.type.ModuleFunSpecFactory
+import com.dvpermyakov.dagger.spec.type.ModuleProvideFunSpecFactory
 import com.dvpermyakov.dagger.utils.getMethodElements
 import com.dvpermyakov.dagger.utils.getQualifiedPackageName
 import com.dvpermyakov.dagger.utils.getReturnElement
@@ -53,7 +53,7 @@ class ModuleProcessor : AbstractProcessor() {
                         val fileSpecBuilder =
                             FileSpec.builder(element.getQualifiedPackageName(processingEnv), className)
                         fileSpecBuilder.addType(
-                            ModuleFunSpecFactory(
+                            ModuleProvideFunSpecFactory(
                                 processingEnv = processingEnv,
                                 className = className,
                                 moduleElement = element,
