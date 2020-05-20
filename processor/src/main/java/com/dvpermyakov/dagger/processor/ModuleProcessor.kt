@@ -1,11 +1,11 @@
 package com.dvpermyakov.dagger.processor
 
+import com.dvpermyakov.dagger.annotation.Binds
 import com.dvpermyakov.dagger.annotation.Module
+import com.dvpermyakov.dagger.annotation.Provide
+import com.dvpermyakov.dagger.spec.type.ModuleBindFunSpecFactory
 import com.dvpermyakov.dagger.spec.type.ModuleProvideFunSpecFactory
-import com.dvpermyakov.dagger.utils.getMethodElements
-import com.dvpermyakov.dagger.utils.getQualifiedPackageName
-import com.dvpermyakov.dagger.utils.getReturnElement
-import com.dvpermyakov.dagger.utils.writeToDaggerKotlin
+import com.dvpermyakov.dagger.utils.*
 import com.google.auto.service.AutoService
 import com.squareup.kotlinpoet.FileSpec
 import javax.annotation.processing.AbstractProcessor
@@ -31,7 +31,7 @@ class ModuleProcessor : AbstractProcessor() {
 
         roundEnv.getElementsAnnotatedWith(Module::class.java)
             .mapNotNull { element ->
-                if (element.kind != ElementKind.CLASS) {
+                if (element.kind !in setOf(ElementKind.CLASS, ElementKind.INTERFACE)) {
                     processingEnv.messager.printMessage(
                         Diagnostic.Kind.ERROR,
                         "Only classes can be annotated with @${Module::class.simpleName}"
@@ -39,29 +39,48 @@ class ModuleProcessor : AbstractProcessor() {
                     null
                 } else element
             }
-            .forEach { element ->
-                element
+            .forEach { moduleElement ->
+                moduleElement
                     .getMethodElements()
                     .map { methodElement ->
                         processingEnv.messager.printMessage(
                             Diagnostic.Kind.NOTE,
                             "process module method ${methodElement.simpleName}"
                         )
+                        when {
+                            methodElement.findAnnotation(processingEnv, Provide::class.java) != null -> {
+                                val returnTypeElement = methodElement.getReturnElement(processingEnv)
+                                val className = "${moduleElement.simpleName}_${returnTypeElement.simpleName}_Factory"
+                                val fileSpecBuilder =
+                                    FileSpec.builder(moduleElement.getQualifiedPackageName(processingEnv), className)
 
-                        val returnTypeElement = methodElement.getReturnElement(processingEnv)
-                        val className = "${element.simpleName}_${returnTypeElement.simpleName}_Factory"
-                        val fileSpecBuilder =
-                            FileSpec.builder(element.getQualifiedPackageName(processingEnv), className)
-                        fileSpecBuilder.addType(
-                            ModuleProvideFunSpecFactory(
-                                processingEnv = processingEnv,
-                                className = className,
-                                moduleElement = element,
-                                methodElement = methodElement
-                            ).create()
-                        )
+                                fileSpecBuilder.addType(
+                                    ModuleProvideFunSpecFactory(
+                                        processingEnv = processingEnv,
+                                        className = className,
+                                        moduleElement = moduleElement,
+                                        methodElement = methodElement
+                                    ).create()
+                                )
+                                fileSpecBuilder.build()
+                            }
+                            methodElement.findAnnotation(processingEnv, Binds::class.java) != null -> {
+                                val returnTypeElement = methodElement.getReturnElement(processingEnv)
+                                val className = "${moduleElement.simpleName}_${returnTypeElement.simpleName}_Binder"
+                                val fileSpecBuilder =
+                                    FileSpec.builder(moduleElement.getQualifiedPackageName(processingEnv), className)
 
-                        fileSpecBuilder.build()
+                                fileSpecBuilder.addType(
+                                    ModuleBindFunSpecFactory(
+                                        processingEnv = processingEnv,
+                                        className = className,
+                                        methodElement = methodElement
+                                    ).create()
+                                )
+                                fileSpecBuilder.build()
+                            }
+                            else -> throw IllegalStateException("Method in module should have ${Provide::class.java.simpleName} or ${Binds::class.java} annotation")
+                        }
                     }
                     .writeToDaggerKotlin(processingEnv)
             }
