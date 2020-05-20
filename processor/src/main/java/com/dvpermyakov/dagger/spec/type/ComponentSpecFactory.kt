@@ -47,29 +47,46 @@ class ComponentSpecFactory(
 
 
         val moduleElements = getModuleElements()
-        val moduleClassNames = moduleElements.map { it.toClassName(processingEnv) }
+        val moduleClassNamesExcludeInterfaces = moduleElements
+            .excludeInterfaces()
+            .map { element ->
+                element.toClassName(processingEnv)
+            }
 
         typeSpecBuilder
-            .setConstructorSpec(moduleClassNames, bindsInstanceClassNames)
-            .setFactoryCompanionObjectSpec(moduleClassNames, bindsInstanceClassNames)
+            .setConstructorSpec(moduleClassNamesExcludeInterfaces, bindsInstanceClassNames)
+            .setFactoryCompanionObjectSpec(moduleClassNamesExcludeInterfaces, bindsInstanceClassNames)
             .addSuperinterface(componentClassName)
 
-        moduleElements.forEach { moduleElement ->
-            moduleElement.getMethodElements().forEach { methodElement ->
-                val returnTypeElement = methodElement.getReturnElement(processingEnv)
-                moduleMethodMap[returnTypeElement] = methodElement
+        moduleElements
+            .forEach { moduleElement ->
+                moduleElement.getMethodElements().forEach { methodElement ->
+                    val returnTypeElement = methodElement.getReturnElement(processingEnv)
+                    moduleMethodMap[returnTypeElement] = methodElement
+                }
             }
-        }
 
-        componentProviders.clear()
-        moduleElements.forEach { moduleElement ->
-            moduleElement.getMethodElements().forEach { methodElement ->
-                typeSpecBuilder.addProviderForElementWithModule(
-                    methodElement = methodElement,
-                    moduleElement = moduleElement
-                )
+        moduleElements
+            .excludeInterfaces()
+            .forEach { moduleElement ->
+                moduleElement.getMethodElements().forEach { methodElement ->
+                    typeSpecBuilder.addProviderForElementWithModule(
+                        methodElement = methodElement,
+                        moduleElement = moduleElement
+                    )
+                }
             }
-        }
+
+        moduleElements
+            .interfacesOnly()
+            .forEach { moduleElement ->
+                moduleElement.getMethodElements().forEach { methodElement ->
+                    typeSpecBuilder.addProviderForBinder(
+                        methodElement = methodElement,
+                        moduleElement = moduleElement
+                    )
+                }
+            }
 
         componentElement
             .getMethodElements()
@@ -134,6 +151,35 @@ class ComponentSpecFactory(
             addProviderProperty(parameterData, statement, statementClassName)
             componentProviders.add(returnClassName)
         }
+
+        return this
+    }
+
+    private fun TypeSpec.Builder.addProviderForBinder(
+        methodElement: ExecutableElement,
+        moduleElement: Element
+    ): TypeSpec.Builder {
+        val returnTypeElement = methodElement.getReturnElement(processingEnv)
+        val returnTypeClassName = returnTypeElement.toClassName(processingEnv)
+
+        val parameterElement = methodElement.getParameterElements(processingEnv).first()
+        val parameterClassName = parameterElement.toClassName(processingEnv)
+        if (!componentProviders.contains(parameterClassName)) {
+            addProviderForElement(parameterElement)
+        }
+
+        val moduleClassName = moduleElement.toClassName(processingEnv)
+        val statementClassNames = ClassName(
+            moduleClassName.packageName,
+            "${moduleClassName.simpleName}_${returnTypeElement.simpleName}_Binder"
+        )
+        val statement = "%T(${parameterClassName.simpleName.decapitalize()}Provider)"
+
+        addProviderProperty(
+            returnTypeClassName.toProviderParameterData(),
+            statement,
+            statementClassNames
+        )
 
         return this
     }

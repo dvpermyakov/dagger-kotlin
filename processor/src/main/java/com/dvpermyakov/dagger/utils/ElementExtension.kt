@@ -30,6 +30,18 @@ internal fun Element.getMethodElements(): List<ExecutableElement> {
         }
 }
 
+internal fun List<Element>.excludeInterfaces(): List<Element> {
+    return filter { element ->
+        element.kind != ElementKind.INTERFACE
+    }
+}
+
+internal fun List<Element>.interfacesOnly(): List<Element> {
+    return filter { element ->
+        element.kind == ElementKind.INTERFACE
+    }
+}
+
 internal fun Element.getNestedInterfaces(): List<Element> {
     return enclosedElements
         .filter { enclosedElement ->
@@ -40,7 +52,7 @@ internal fun Element.getNestedInterfaces(): List<Element> {
 internal fun Element.getConstructor(): ExecutableElement? {
     return enclosedElements.firstOrNull { enclosedElement ->
         enclosedElement.kind == ElementKind.CONSTRUCTOR
-    } as ExecutableElement
+    } as? ExecutableElement
 }
 
 internal fun ExecutableElement.getReturnElement(

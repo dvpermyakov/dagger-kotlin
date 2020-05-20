@@ -8,7 +8,7 @@ import javax.annotation.processing.ProcessingEnvironment
 import javax.lang.model.element.Element
 import javax.lang.model.element.ExecutableElement
 
-class ModuleFunSpecFactory(
+class ModuleProvideFunSpecFactory(
     private val processingEnv: ProcessingEnvironment,
     private val className: String,
     private val moduleElement: Element,
