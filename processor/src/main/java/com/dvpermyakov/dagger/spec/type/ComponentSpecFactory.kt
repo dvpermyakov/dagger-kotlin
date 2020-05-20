@@ -1,5 +1,6 @@
 package com.dvpermyakov.dagger.spec.type
 
+import com.dvpermyakov.dagger.annotation.BindsInstance
 import com.dvpermyakov.dagger.annotation.Component
 import com.dvpermyakov.dagger.utils.*
 import com.squareup.kotlinpoet.*
@@ -10,7 +11,6 @@ import javax.inject.Inject
 import javax.lang.model.element.AnnotationValue
 import javax.lang.model.element.Element
 import javax.lang.model.element.ExecutableElement
-import javax.tools.Diagnostic
 
 class ComponentSpecFactory(
     private val processingEnv: ProcessingEnvironment,
@@ -33,8 +33,7 @@ class ComponentSpecFactory(
         val factoryInterfaceElement = componentElement
             .getNestedInterfaces()
             .firstOrNull { interfaceElement ->
-                val annotation = interfaceElement.findAnnotation(processingEnv, Component.Factory::class.java)
-                annotation != null
+                interfaceElement.hasAnnotation(processingEnv, Component.Factory::class.java)
             }
         val factoryCreateFunction = factoryInterfaceElement
             ?.getMethodElements()
@@ -42,23 +41,33 @@ class ComponentSpecFactory(
                 val returnTypeElement = methodElement.getReturnElement(processingEnv)
                 returnTypeElement == componentElement
             }
-        val bindsInstanceElements = factoryCreateFunction?.getParameterElements(processingEnv) ?: emptyList()
-        val bindsInstanceClassNames = bindsInstanceElements.map { it.toClassName(processingEnv) }
-
+        val bindsInstanceElements = factoryCreateFunction
+            ?.parameters
+            ?.filter { element ->
+                element.hasAnnotation(processingEnv, BindsInstance::class.java)
+            }
+            ?.map { variableElement ->
+                variableElement.asType().toElement(processingEnv)
+            } ?: emptyList()
+        val bindsInstanceClassNames = bindsInstanceElements.toClassNames(processingEnv)
 
         val moduleElements = getModuleElements()
         val moduleClassNamesExcludeInterfaces = moduleElements
             .excludeInterfaces()
-            .map { element ->
-                element.toClassName(processingEnv)
-            }
+            .toClassNames(processingEnv)
+        val dependencyElements = getDependencyElements()
 
         typeSpecBuilder
-            .setConstructorSpec(moduleClassNamesExcludeInterfaces, bindsInstanceClassNames)
+            .setConstructorSpec(
+                moduleClassNames = moduleClassNamesExcludeInterfaces,
+                dependencyClassNames = dependencyElements.toClassNames(processingEnv),
+                bindsInstanceClassNames = bindsInstanceClassNames
+            )
             .setFactoryCompanionObjectSpec(
                 factoryInterfaceElement = factoryInterfaceElement,
                 factoryMethodElement = factoryCreateFunction,
                 moduleClassNames = moduleClassNamesExcludeInterfaces,
+                dependencyElements = dependencyElements,
                 bindsInstanceClassNames = bindsInstanceClassNames
             )
             .addSuperinterface(componentClassName)
@@ -115,8 +124,7 @@ class ComponentSpecFactory(
                     val parameterClassName = parameterElement.toClassName(processingEnv)
                     val parameterName = parameterTypeElement.simpleName.toString().decapitalize()
                     val fieldElements = parameterElement.getFieldElements().filter { fieldElement ->
-                        val annotation = fieldElement.findAnnotation(processingEnv, Inject::class.java)
-                        annotation != null
+                        fieldElement.hasAnnotation(processingEnv, Inject::class.java)
                     }
                     typeSpecBuilder.addFunction(
                         FunSpec.builder(methodElement.simpleName.toString())
@@ -143,11 +151,20 @@ class ComponentSpecFactory(
 
     private fun getModuleElements(): List<Element> {
         val componentAnnotation = requireNotNull(componentElement.findAnnotation(processingEnv, Component::class.java))
-        val componentAnnotationModulesValue = componentAnnotation.elementValues.entries.first().value
+        val componentAnnotationModulesValue = componentAnnotation.elementValues.entries.elementAt(0).value
         return (componentAnnotationModulesValue.value as? List<*>)?.map { annotationValue ->
             val moduleClassValue = (annotationValue as AnnotationValue).value.toString()
             processingEnv.elementUtils.getAllTypeElements(moduleClassValue).first()
         } ?: throw IllegalStateException("${Component::class.java} element should contain a module list")
+    }
+
+    private fun getDependencyElements(): List<Element> {
+        val componentAnnotation = requireNotNull(componentElement.findAnnotation(processingEnv, Component::class.java))
+        val componentAnnotationDependenciesValue = componentAnnotation.elementValues.entries.elementAt(1).value
+        return (componentAnnotationDependenciesValue.value as? List<*>)?.map { annotationValue ->
+            val dependencyClassValue = (annotationValue as AnnotationValue).value.toString()
+            processingEnv.elementUtils.getAllTypeElements(dependencyClassValue).first()
+        } ?: throw IllegalStateException("${Component::class.java} element should contain a dependency list")
     }
 
     private fun TypeSpec.Builder.addProviderForElementWithModule(
@@ -171,7 +188,7 @@ class ComponentSpecFactory(
             }
 
             val parameterData = returnClassName.toProviderParameterData()
-            val parameterClassNames = parameterElements.map { it.toClassName(processingEnv) }
+            val parameterClassNames = parameterElements.toClassNames(processingEnv)
             val parameterNames =
                 listOf(moduleClassName.simpleName.decapitalize()) + parameterClassNames.map { it.simpleName.decapitalize() + "Provider" }
             val statementClassName = ClassName(
@@ -221,8 +238,7 @@ class ComponentSpecFactory(
         val className = element.toClassName(processingEnv)
         if (!componentProviders.contains(className)) {
             val constructorElement = element.getConstructor()
-            val constructorAnnotation = constructorElement?.findAnnotation(processingEnv, Inject::class.java)
-            if (constructorAnnotation != null) {
+            if (constructorElement?.hasAnnotation(processingEnv, Inject::class.java) == true) {
                 val parameterElements = constructorElement
                     .getParameterElements(processingEnv)
 
@@ -247,6 +263,7 @@ class ComponentSpecFactory(
 
     private fun TypeSpec.Builder.setConstructorSpec(
         moduleClassNames: List<ClassName>,
+        dependencyClassNames: List<ClassName>,
         bindsInstanceClassNames: List<ClassName>
     ): TypeSpec.Builder {
         val funSpecBuilder = FunSpec.constructorBuilder().addModifiers(KModifier.PRIVATE)
@@ -254,6 +271,11 @@ class ComponentSpecFactory(
         moduleClassNames.forEach { moduleClassName ->
             val moduleName = moduleClassName.simpleName.decapitalize()
             funSpecBuilder.addParameter(moduleName, moduleClassName)
+        }
+
+        dependencyClassNames.forEach { dependencyClassName ->
+            val dependencyName = dependencyClassName.simpleName.decapitalize()
+            funSpecBuilder.addParameter(dependencyName, dependencyClassName)
         }
 
         bindsInstanceClassNames.forEach { bindsInstanceClassName ->
@@ -270,31 +292,52 @@ class ComponentSpecFactory(
         factoryInterfaceElement: Element?,
         factoryMethodElement: Element?,
         moduleClassNames: List<ClassName>,
+        dependencyElements: List<Element>,
         bindsInstanceClassNames: List<ClassName>
     ): TypeSpec.Builder {
+
+        val dependencyClassNames = dependencyElements.toClassNames(processingEnv)
+
+        dependencyElements.forEach { dependencyElement ->
+            val dependencyName = dependencyElement.simpleName.toString().decapitalize()
+            val methodElements = dependencyElement.getMethodElements()
+            methodElements.forEach { methodElement ->
+                if (methodElement.parameters.isEmpty()) {
+                    val returnTypeElement = requireNotNull(methodElement.getReturnElement(processingEnv))
+                    val returnTypeClassName = returnTypeElement.toClassName(processingEnv)
+                    val parameterData = returnTypeClassName.toProviderParameterData()
+                    val statement = "%T($dependencyName.${methodElement.simpleName}())"
+                    val containerTypeName =
+                        ContainerProvider::class.java.toClassName().parameterizedBy(returnTypeClassName)
+                    addProviderProperty(parameterData, statement, containerTypeName)
+                }
+            }
+        }
 
         bindsInstanceClassNames.forEach { bindsInstanceClassName ->
             val parameterData = bindsInstanceClassName.toProviderParameterData()
             val statement = "%T(${bindsInstanceClassName.simpleName.decapitalize()})"
             val containerTypeName = ContainerProvider::class.java.toClassName().parameterizedBy(bindsInstanceClassName)
-            addProviderProperty(
-                parameterData,
-                statement,
-                containerTypeName
-            )
+            addProviderProperty(parameterData, statement, containerTypeName)
         }
 
+        val dependenciesStatement = dependencyClassNames.map { it.simpleName.decapitalize() }
         val bindsStatement = bindsInstanceClassNames.map { it.simpleName.decapitalize() }
         val modulesStatement = List(moduleClassNames.size) { "%T()" }
-        val statementCode = (modulesStatement + bindsStatement).joinToString(", ")
+        val statementCode = (modulesStatement + dependenciesStatement + bindsStatement).joinToString(", ")
         val statement = "return $className(%s)".format(statementCode)
 
         val bindsParameters = bindsInstanceClassNames.map { bindsInstanceClassName ->
             val bindsInstanceName = bindsInstanceClassName.simpleName.decapitalize()
             ParameterSpec.builder(bindsInstanceName, bindsInstanceClassName).build()
         }
+        val dependencyParameters = dependencyClassNames.map { dependencyClassName ->
+            val dependencyName = dependencyClassName.simpleName.decapitalize()
+            ParameterSpec.builder(dependencyName, dependencyClassName).build()
+        }
         val createFunSpec = if (factoryMethodElement != null) {
             FunSpec.builder(factoryMethodElement.simpleName.toString())
+                .addParameters(dependencyParameters)
                 .addParameters(bindsParameters)
                 .addModifiers(KModifier.OVERRIDE)
                 .returns(componentClassName)
@@ -302,6 +345,7 @@ class ComponentSpecFactory(
                 .build()
         } else {
             FunSpec.builder("create")
+                .addParameters(dependencyParameters)
                 .addParameters(bindsParameters)
                 .returns(componentClassName)
                 .addStatement(statement, *moduleClassNames.toTypedArray())

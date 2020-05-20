@@ -48,7 +48,7 @@ class ModuleProcessor : AbstractProcessor() {
                             "process module method ${methodElement.simpleName}"
                         )
                         when {
-                            methodElement.findAnnotation(processingEnv, Provide::class.java) != null -> {
+                            methodElement.hasAnnotation(processingEnv, Provide::class.java) -> {
                                 val returnTypeElement = requireNotNull(methodElement.getReturnElement(processingEnv))
                                 val className = "${moduleElement.simpleName}_${returnTypeElement.simpleName}_Factory"
                                 val fileSpecBuilder =
@@ -64,7 +64,7 @@ class ModuleProcessor : AbstractProcessor() {
                                 )
                                 fileSpecBuilder.build()
                             }
-                            methodElement.findAnnotation(processingEnv, Binds::class.java) != null -> {
+                            methodElement.hasAnnotation(processingEnv, Binds::class.java) -> {
                                 val returnTypeElement = requireNotNull(methodElement.getReturnElement(processingEnv))
                                 val className = "${moduleElement.simpleName}_${returnTypeElement.simpleName}_Binder"
                                 val fileSpecBuilder =

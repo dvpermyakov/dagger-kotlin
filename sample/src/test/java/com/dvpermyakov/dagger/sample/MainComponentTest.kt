@@ -8,7 +8,7 @@ import com.dvpermyakov.dagger.sample.presentation.TransactionView
 import org.junit.Assert
 import org.junit.Test
 
-class Test {
+class MainComponentTest {
 
     @Test
     fun getTransactionViewModel() {

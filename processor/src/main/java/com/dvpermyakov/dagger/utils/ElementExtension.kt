@@ -31,6 +31,14 @@ internal fun Element.toClassName(
     return ClassName(packageName, name)
 }
 
+internal fun List<Element>.toClassNames(
+    processingEnv: ProcessingEnvironment
+): List<ClassName> {
+    return map { element ->
+        element.toClassName(processingEnv)
+    }
+}
+
 internal fun Element.getMethodElements(): List<ExecutableElement> {
     return enclosedElements
         .filter { enclosedElement ->
@@ -90,9 +98,7 @@ internal fun ExecutableElement.getParameterElements(
 internal fun ExecutableElement.getParametersClassName(
     processingEnv: ProcessingEnvironment
 ): List<ClassName> {
-    return getParameterElements(processingEnv).map { element ->
-        element.toClassName(processingEnv)
-    }
+    return getParameterElements(processingEnv).toClassNames(processingEnv)
 }
 
 internal fun Element.findAnnotation(
@@ -107,4 +113,11 @@ internal fun Element.findAnnotation(
 
             annotationClass.`package`.name == annotationPackage && annotationClass.simpleName == annotationElement.simpleName.toString()
         }
+}
+
+internal fun Element.hasAnnotation(
+    processingEnv: ProcessingEnvironment,
+    annotationClass: Class<*>
+): Boolean {
+    return findAnnotation(processingEnv, annotationClass) != null
 }
