@@ -6,13 +6,6 @@ import javax.lang.model.element.AnnotationMirror
 import javax.lang.model.element.Element
 import javax.lang.model.element.ElementKind
 import javax.lang.model.element.ExecutableElement
-import javax.lang.model.type.TypeMirror
-
-internal fun TypeMirror.toElement(
-    processingEnv: ProcessingEnvironment
-): Element {
-    return processingEnv.typeUtils.asElement(this)
-}
 
 internal fun Element.getQualifiedPackageName(
     processingEnv: ProcessingEnvironment
