@@ -24,14 +24,6 @@ internal fun Element.toClassName(
     return ClassName(packageName, name)
 }
 
-internal fun List<Element>.toClassNames(
-    processingEnv: ProcessingEnvironment
-): List<ClassName> {
-    return map { element ->
-        element.toClassName(processingEnv)
-    }
-}
-
 internal fun Element.getMethodElements(): List<ExecutableElement> {
     return enclosedElements
         .filter { enclosedElement ->
@@ -49,18 +41,6 @@ internal fun Element.getFieldElements(): List<Element> {
         }
 }
 
-internal fun List<Element>.excludeInterfaces(): List<Element> {
-    return filter { element ->
-        element.kind != ElementKind.INTERFACE
-    }
-}
-
-internal fun List<Element>.interfacesOnly(): List<Element> {
-    return filter { element ->
-        element.kind == ElementKind.INTERFACE
-    }
-}
-
 internal fun Element.getNestedInterfaces(): List<Element> {
     return enclosedElements
         .filter { enclosedElement ->
@@ -72,26 +52,6 @@ internal fun Element.getConstructor(): ExecutableElement? {
     return enclosedElements.firstOrNull { enclosedElement ->
         enclosedElement.kind == ElementKind.CONSTRUCTOR
     } as? ExecutableElement
-}
-
-internal fun ExecutableElement.getReturnElement(
-    processingEnv: ProcessingEnvironment
-): Element? {
-    return processingEnv.typeUtils.asElement(returnType)
-}
-
-internal fun ExecutableElement.getParameterElements(
-    processingEnv: ProcessingEnvironment
-): List<Element> {
-    return parameters.map { parameter ->
-        processingEnv.typeUtils.asElement(parameter.asType())
-    }
-}
-
-internal fun ExecutableElement.getParametersClassName(
-    processingEnv: ProcessingEnvironment
-): List<ClassName> {
-    return getParameterElements(processingEnv).toClassNames(processingEnv)
 }
 
 internal fun Element.findAnnotation(
