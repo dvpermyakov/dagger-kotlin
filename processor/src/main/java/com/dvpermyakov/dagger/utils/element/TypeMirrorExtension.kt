@@ -1,4 +1,4 @@
-package com.dvpermyakov.dagger.utils
+package com.dvpermyakov.dagger.utils.element
 
 import javax.annotation.processing.ProcessingEnvironment
 import javax.lang.model.element.Element
