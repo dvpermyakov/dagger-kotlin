@@ -1,4 +1,4 @@
-package com.dvpermyakov.dagger.utils
+package com.dvpermyakov.dagger.utils.element
 
 import com.squareup.kotlinpoet.ClassName
 import javax.annotation.processing.ProcessingEnvironment

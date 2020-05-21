@@ -1,7 +1,7 @@
 package com.dvpermyakov.dagger.processor
 
 import com.dvpermyakov.dagger.spec.type.InjectConstructorSpecFactory
-import com.dvpermyakov.dagger.utils.getQualifiedPackageName
+import com.dvpermyakov.dagger.utils.element.getQualifiedPackageName
 import com.dvpermyakov.dagger.utils.writeToDaggerKotlin
 import com.google.auto.service.AutoService
 import com.squareup.kotlinpoet.FileSpec

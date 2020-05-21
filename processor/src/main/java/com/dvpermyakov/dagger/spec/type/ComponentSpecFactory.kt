@@ -5,6 +5,7 @@ import com.dvpermyakov.dagger.annotation.Component
 import com.dvpermyakov.dagger.spec.func.ConstructorSpecFactory
 import com.dvpermyakov.dagger.spec.property.ComponentProviderProperty
 import com.dvpermyakov.dagger.utils.*
+import com.dvpermyakov.dagger.utils.element.*
 import com.squareup.kotlinpoet.*
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
 import javax.annotation.processing.Generated

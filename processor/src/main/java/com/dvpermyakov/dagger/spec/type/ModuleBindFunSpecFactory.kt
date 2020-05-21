@@ -3,6 +3,9 @@ package com.dvpermyakov.dagger.spec.type
 import com.dvpermyakov.dagger.spec.func.ConstructorSpecFactory
 import com.dvpermyakov.dagger.spec.func.OverrideGetFunSpecFactory
 import com.dvpermyakov.dagger.utils.*
+import com.dvpermyakov.dagger.utils.element.getParametersClassName
+import com.dvpermyakov.dagger.utils.element.getReturnElement
+import com.dvpermyakov.dagger.utils.element.toClassName
 import com.squareup.kotlinpoet.TypeSpec
 import javax.annotation.processing.Generated
 import javax.annotation.processing.ProcessingEnvironment
