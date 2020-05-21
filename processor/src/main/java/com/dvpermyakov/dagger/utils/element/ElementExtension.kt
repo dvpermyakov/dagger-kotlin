@@ -2,10 +2,7 @@ package com.dvpermyakov.dagger.utils.element
 
 import com.squareup.kotlinpoet.ClassName
 import javax.annotation.processing.ProcessingEnvironment
-import javax.lang.model.element.AnnotationMirror
-import javax.lang.model.element.Element
-import javax.lang.model.element.ElementKind
-import javax.lang.model.element.ExecutableElement
+import javax.lang.model.element.*
 
 internal fun Element.getQualifiedPackageName(
     processingEnv: ProcessingEnvironment
@@ -73,4 +70,17 @@ internal fun Element.hasAnnotation(
     annotationClass: Class<*>
 ): Boolean {
     return findAnnotation(processingEnv, annotationClass) != null
+}
+
+internal fun Element.getAnnotationElements(
+    processingEnv: ProcessingEnvironment,
+    annotationClass: Class<*>,
+    index: Int
+): List<Element> {
+    val annotation = requireNotNull(this.findAnnotation(processingEnv, annotationClass))
+    val annotationIndexValue = annotation.elementValues.entries.elementAt(index).value
+    return (annotationIndexValue.value as? List<*>)?.map { annotationValue ->
+        val classValue = (annotationValue as AnnotationValue).value.toString()
+        processingEnv.elementUtils.getAllTypeElements(classValue).first()
+    } ?: throw IllegalStateException("$annotationClass element should contain a list of items")
 }

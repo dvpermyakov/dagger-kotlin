@@ -4,15 +4,17 @@ import com.dvpermyakov.dagger.annotation.BindsInstance
 import com.dvpermyakov.dagger.annotation.Component
 import com.dvpermyakov.dagger.spec.func.ConstructorSpecFactory
 import com.dvpermyakov.dagger.spec.property.ComponentProviderProperty
-import com.dvpermyakov.dagger.utils.*
+import com.dvpermyakov.dagger.utils.ContainerProvider
+import com.dvpermyakov.dagger.utils.ParameterData
 import com.dvpermyakov.dagger.utils.element.*
+import com.dvpermyakov.dagger.utils.toClassName
+import com.dvpermyakov.dagger.utils.toProviderParameterData
 import com.squareup.kotlinpoet.*
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
 import javax.annotation.processing.Generated
 import javax.annotation.processing.ProcessingEnvironment
 import javax.inject.Inject
 import javax.inject.Singleton
-import javax.lang.model.element.AnnotationValue
 import javax.lang.model.element.Element
 import javax.lang.model.element.ExecutableElement
 
@@ -55,11 +57,11 @@ class ComponentSpecFactory(
             } ?: emptyList()
         val bindsInstanceClassNames = bindsInstanceElements.toClassNames(processingEnv)
 
-        val moduleElements = getModuleElements()
+        val moduleElements = componentElement.getAnnotationElements(processingEnv, Component::class.java, 0)
         val moduleClassNamesExcludeInterfaces = moduleElements
             .excludeInterfaces()
             .toClassNames(processingEnv)
-        val dependencyElements = getDependencyElements()
+        val dependencyElements = componentElement.getAnnotationElements(processingEnv, Component::class.java, 1)
 
         val constructorParameters = (
             moduleClassNamesExcludeInterfaces +
@@ -155,24 +157,6 @@ class ComponentSpecFactory(
             }
 
         return typeSpecBuilder.build()
-    }
-
-    private fun getModuleElements(): List<Element> {
-        val componentAnnotation = requireNotNull(componentElement.findAnnotation(processingEnv, Component::class.java))
-        val componentAnnotationModulesValue = componentAnnotation.elementValues.entries.elementAt(0).value
-        return (componentAnnotationModulesValue.value as? List<*>)?.map { annotationValue ->
-            val moduleClassValue = (annotationValue as AnnotationValue).value.toString()
-            processingEnv.elementUtils.getAllTypeElements(moduleClassValue).first()
-        } ?: throw IllegalStateException("${Component::class.java} element should contain a module list")
-    }
-
-    private fun getDependencyElements(): List<Element> {
-        val componentAnnotation = requireNotNull(componentElement.findAnnotation(processingEnv, Component::class.java))
-        val componentAnnotationDependenciesValue = componentAnnotation.elementValues.entries.elementAt(1).value
-        return (componentAnnotationDependenciesValue.value as? List<*>)?.map { annotationValue ->
-            val dependencyClassValue = (annotationValue as AnnotationValue).value.toString()
-            processingEnv.elementUtils.getAllTypeElements(dependencyClassValue).first()
-        } ?: throw IllegalStateException("${Component::class.java} element should contain a dependency list")
     }
 
     private fun TypeSpec.Builder.addProviderForElementWithModule(
