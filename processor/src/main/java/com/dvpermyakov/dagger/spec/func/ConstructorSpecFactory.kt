@@ -2,7 +2,6 @@ package com.dvpermyakov.dagger.spec.func
 
 import com.dvpermyakov.dagger.utils.ParameterData
 import com.squareup.kotlinpoet.FunSpec
-import com.squareup.kotlinpoet.KModifier
 
 class ConstructorSpecFactory(
     private val parameters: List<ParameterData>
@@ -11,7 +10,7 @@ class ConstructorSpecFactory(
         val funSpecBuilder = FunSpec.constructorBuilder()
 
         parameters.forEach { parameter ->
-            funSpecBuilder.addParameter(parameter.name, parameter.typeName, KModifier.PRIVATE)
+            funSpecBuilder.addParameter(parameter.name, parameter.typeName)
         }
 
         return funSpecBuilder.build()

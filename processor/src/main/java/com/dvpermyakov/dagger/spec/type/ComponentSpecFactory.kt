@@ -2,6 +2,7 @@ package com.dvpermyakov.dagger.spec.type
 
 import com.dvpermyakov.dagger.annotation.BindsInstance
 import com.dvpermyakov.dagger.annotation.Component
+import com.dvpermyakov.dagger.spec.func.ConstructorSpecFactory
 import com.dvpermyakov.dagger.spec.property.ComponentProviderProperty
 import com.dvpermyakov.dagger.utils.*
 import com.squareup.kotlinpoet.*
@@ -59,12 +60,16 @@ class ComponentSpecFactory(
             .toClassNames(processingEnv)
         val dependencyElements = getDependencyElements()
 
+        val constructorParameters = (
+            moduleClassNamesExcludeInterfaces +
+                dependencyElements.toClassNames(processingEnv) +
+                bindsInstanceClassNames
+            ).map { className ->
+                ParameterData(className, className.simpleName.decapitalize())
+            }
+
         typeSpecBuilder
-            .setConstructorSpec(
-                moduleClassNames = moduleClassNamesExcludeInterfaces,
-                dependencyClassNames = dependencyElements.toClassNames(processingEnv),
-                bindsInstanceClassNames = bindsInstanceClassNames
-            )
+            .primaryConstructor(ConstructorSpecFactory(constructorParameters).create())
             .setFactoryCompanionObjectSpec(
                 factoryInterfaceElement = factoryInterfaceElement,
                 factoryMethodElement = factoryCreateFunction,
@@ -275,33 +280,6 @@ class ComponentSpecFactory(
                 componentProviders.add(className)
             }
         }
-
-        return this
-    }
-
-    private fun TypeSpec.Builder.setConstructorSpec(
-        moduleClassNames: List<ClassName>,
-        dependencyClassNames: List<ClassName>,
-        bindsInstanceClassNames: List<ClassName>
-    ): TypeSpec.Builder {
-        val funSpecBuilder = FunSpec.constructorBuilder().addModifiers(KModifier.PRIVATE)
-
-        moduleClassNames.forEach { moduleClassName ->
-            val moduleName = moduleClassName.simpleName.decapitalize()
-            funSpecBuilder.addParameter(moduleName, moduleClassName)
-        }
-
-        dependencyClassNames.forEach { dependencyClassName ->
-            val dependencyName = dependencyClassName.simpleName.decapitalize()
-            funSpecBuilder.addParameter(dependencyName, dependencyClassName)
-        }
-
-        bindsInstanceClassNames.forEach { bindsInstanceClassName ->
-            val bindsInstanceName = bindsInstanceClassName.simpleName.decapitalize()
-            funSpecBuilder.addParameter(bindsInstanceName, bindsInstanceClassName)
-        }
-
-        this.primaryConstructor(funSpecBuilder.build())
 
         return this
     }
