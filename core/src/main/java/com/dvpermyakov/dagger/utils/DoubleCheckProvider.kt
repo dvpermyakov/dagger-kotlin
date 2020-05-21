@@ -13,18 +13,11 @@ class DoubleCheckProvider<T>(
             instance!!
         } else synchronized(this) {
             if (instance == null) {
-                val instance = provider.get()
-                this.instance = instance
-                instance
+                instance = provider.get()
+                instance!!
             } else {
                 instance!!
             }
-        }
-    }
-
-    companion object {
-        fun <T> create(provider: Provider<T>): Provider<T> {
-            return DoubleCheckProvider(provider)
         }
     }
 }

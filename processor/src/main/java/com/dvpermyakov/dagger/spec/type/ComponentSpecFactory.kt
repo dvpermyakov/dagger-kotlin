@@ -8,6 +8,7 @@ import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
 import javax.annotation.processing.Generated
 import javax.annotation.processing.ProcessingEnvironment
 import javax.inject.Inject
+import javax.inject.Singleton
 import javax.lang.model.element.AnnotationValue
 import javax.lang.model.element.Element
 import javax.lang.model.element.ExecutableElement
@@ -196,7 +197,9 @@ class ComponentSpecFactory(
                 "${moduleClassName.simpleName}_${returnTypeElement.simpleName}_Factory"
             )
             val statement = "%T(${parameterNames.joinToString(", ")})"
-            addProviderProperty(parameterData, statement, statementClassName)
+            val isSingleton = methodElement.hasAnnotation(processingEnv, Singleton::class.java)
+
+            addProviderProperty(parameterData, statement, statementClassName, isSingleton)
             componentProviders.add(returnClassName)
         }
 
@@ -222,11 +225,13 @@ class ComponentSpecFactory(
             "${moduleClassName.simpleName}_${returnTypeElement.simpleName}_Binder"
         )
         val statement = "%T(${parameterClassName.simpleName.decapitalize()}Provider)"
+        val isSingleton = methodElement.hasAnnotation(processingEnv, Singleton::class.java)
 
         addProviderProperty(
             returnTypeClassName.toProviderParameterData(),
             statement,
-            statementClassNames
+            statementClassNames,
+            isSingleton
         )
 
         return this
@@ -253,7 +258,8 @@ class ComponentSpecFactory(
                 }
                 val statementClassName = ClassName(className.packageName, "${className.simpleName}_Factory")
                 val statement = "%T(${parameterNames.joinToString(", ")})"
-                addProviderProperty(parameterData, statement, statementClassName)
+                val isSingleton = element.hasAnnotation(processingEnv, Singleton::class.java)
+                addProviderProperty(parameterData, statement, statementClassName, isSingleton)
                 componentProviders.add(className)
             }
         }
@@ -309,7 +315,7 @@ class ComponentSpecFactory(
                     val statement = "%T($dependencyName.${methodElement.simpleName}())"
                     val containerTypeName =
                         ContainerProvider::class.java.toClassName().parameterizedBy(returnTypeClassName)
-                    addProviderProperty(parameterData, statement, containerTypeName)
+                    addProviderProperty(parameterData, statement, containerTypeName, false)
                 }
             }
         }
@@ -318,7 +324,7 @@ class ComponentSpecFactory(
             val parameterData = bindsInstanceClassName.toProviderParameterData()
             val statement = "%T(${bindsInstanceClassName.simpleName.decapitalize()})"
             val containerTypeName = ContainerProvider::class.java.toClassName().parameterizedBy(bindsInstanceClassName)
-            addProviderProperty(parameterData, statement, containerTypeName)
+            addProviderProperty(parameterData, statement, containerTypeName, false)
         }
 
         val dependenciesStatement = dependencyClassNames.map { it.simpleName.decapitalize() }
@@ -365,13 +371,20 @@ class ComponentSpecFactory(
     private fun TypeSpec.Builder.addProviderProperty(
         parameterData: ParameterData,
         initializer: String,
-        initializerTypeName: TypeName
+        initializerTypeName: TypeName,
+        isSingleton: Boolean
     ): TypeSpec.Builder {
-        this.addProperty(
+        val propertySpec = if (isSingleton) {
+            val doubleCheckClassName = DoubleCheckProvider::class.java.toClassName()
+            PropertySpec.builder(parameterData.name, parameterData.typeName, KModifier.PRIVATE)
+                .initializer("%T($initializer)", doubleCheckClassName, initializerTypeName)
+                .build()
+        } else {
             PropertySpec.builder(parameterData.name, parameterData.typeName, KModifier.PRIVATE)
                 .initializer(initializer, initializerTypeName)
                 .build()
-        )
+        }
+        this.addProperty(propertySpec)
 
         return this
     }
