@@ -22,15 +22,16 @@ class ModuleProvideFunSpecFactory(
         val parameters = methodElement
             .getParametersClassName(processingEnv)
             .map { parameterClassName -> parameterClassName.toProviderParameterData() }
+        val moduleParameter = ParameterData(moduleClassName, "module")
 
-        val getCodeStatement = "return module.${methodElement.simpleName}(" +
+        val getCodeStatement = "return ${moduleParameter.name}.${methodElement.simpleName}(" +
             "${parameters.joinToString(", ") { parameter ->
                 "${parameter.name}.get()"
             }})"
 
         return TypeSpec.classBuilder(className)
             .addAnnotation(Generated::class.java)
-            .setConstructorSpec(moduleClassName, parameters)
+            .setConstructorSpec(listOf(moduleParameter) + parameters)
             .addSuperinterface(returnClassName.toFactoryClassName())
             .addFunction(
                 OverrideGetFunSpecFactory(
@@ -42,18 +43,15 @@ class ModuleProvideFunSpecFactory(
     }
 
     private fun TypeSpec.Builder.setConstructorSpec(
-        moduleTypeName: TypeName,
         parameters: List<ParameterData>
     ): TypeSpec.Builder {
         val funSpecBuilder = FunSpec.constructorBuilder()
-            .addParameter("module", moduleTypeName, KModifier.PRIVATE)
 
         parameters.forEach { parameter ->
             funSpecBuilder.addParameter(parameter.name, parameter.typeName, KModifier.PRIVATE)
         }
 
         this.primaryConstructor(funSpecBuilder.build())
-        this.addProperty(PropertySpec.builder("module", moduleTypeName).initializer("module").build())
 
         this.addProperties(
             parameters.map { parameter ->
