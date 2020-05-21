@@ -3,16 +3,18 @@ package com.dvpermyakov.dagger.spec.type
 import com.dvpermyakov.dagger.annotation.BindsInstance
 import com.dvpermyakov.dagger.annotation.Component
 import com.dvpermyakov.dagger.graph.ComponentGraphTraversing
-import com.dvpermyakov.dagger.spec.func.ComponentEmptyFunSpecFactory
+import com.dvpermyakov.dagger.spec.func.ComponentFunSpecFactory
 import com.dvpermyakov.dagger.spec.func.ConstructorSpecFactory
 import com.dvpermyakov.dagger.spec.property.ComponentProviderProperty
-import com.dvpermyakov.dagger.utils.*
+import com.dvpermyakov.dagger.utils.ContainerProvider
+import com.dvpermyakov.dagger.utils.ParameterData
 import com.dvpermyakov.dagger.utils.element.*
+import com.dvpermyakov.dagger.utils.toClassName
+import com.dvpermyakov.dagger.utils.toProviderParameterData
 import com.squareup.kotlinpoet.*
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
 import javax.annotation.processing.Generated
 import javax.annotation.processing.ProcessingEnvironment
-import javax.inject.Inject
 import javax.lang.model.element.Element
 
 class ComponentSpecFactory(
@@ -95,45 +97,14 @@ class ComponentSpecFactory(
         componentElement
             .getMethodElements()
             .map { methodElement ->
-                val count = methodElement.getParametersClassName(processingEnv).count()
-                val returnTypeElement = methodElement.getReturnElement(processingEnv)
-                if (count == 0 && returnTypeElement != null) {
-                    typeSpecBuilder.addFunction(
-                        ComponentEmptyFunSpecFactory(
-                            methodName = methodElement.simpleName.toString(),
-                            returnTypeClassName = returnTypeElement.toClassName(processingEnv)
-                        ).create()
-                    )
-                    graph.addElementWithInjectedConstructor(returnTypeElement)
-                } else {
-                    val parameterTypeElement = methodElement.parameters.first()
-                    val parameterElement = parameterTypeElement.asType().toElement(processingEnv)
-                    val parameterClassName = parameterElement.toClassName(processingEnv)
-                    val parameterName = parameterTypeElement.simpleName.toString().decapitalize()
-                    val fieldElements = parameterElement.getFieldElements().filter { fieldElement ->
-                        fieldElement.hasAnnotation(processingEnv, Inject::class.java)
-                    }
-                    typeSpecBuilder.addFunction(
-                        FunSpec.builder(methodElement.simpleName.toString())
-                            .addModifiers(KModifier.OVERRIDE)
-                            .addParameter(parameterName, parameterClassName)
-                            .addCode(buildCodeBlock {
-                                fieldElements.forEach { fieldElement ->
-                                    val fieldTypeElement = fieldElement.asType().toElement(processingEnv)
-                                    val fieldTypeClassName = fieldTypeElement.toClassName(processingEnv)
-                                    graph.addElementWithInjectedConstructor(fieldTypeElement)
-                                    val fieldTypeProvider = fieldTypeClassName.toProviderName()
-                                    addStatement("$parameterName.${fieldElement.simpleName} = $fieldTypeProvider.get()")
-                                }
-                            })
-                            .build()
-                    )
-                }
+                typeSpecBuilder.addFunction(ComponentFunSpecFactory(
+                    processingEnv = processingEnv,
+                    graph = graph,
+                    methodElement = methodElement
+                ).create())
             }
 
-        typeSpecBuilder.addProperties(graph.getProperties())
-
-        return typeSpecBuilder.build()
+        return typeSpecBuilder.addProperties(graph.getProperties()).build()
     }
 
     private fun TypeSpec.Builder.setFactoryCompanionObjectSpec(
