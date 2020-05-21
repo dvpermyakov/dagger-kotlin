@@ -3,14 +3,11 @@ package com.dvpermyakov.dagger.spec.type
 import com.dvpermyakov.dagger.annotation.BindsInstance
 import com.dvpermyakov.dagger.annotation.Component
 import com.dvpermyakov.dagger.graph.ComponentGraphTraversing
-import com.dvpermyakov.dagger.spec.func.ConstructorSpecFactory
 import com.dvpermyakov.dagger.spec.func.ComponentEmptyFunSpecFactory
+import com.dvpermyakov.dagger.spec.func.ConstructorSpecFactory
 import com.dvpermyakov.dagger.spec.property.ComponentProviderProperty
-import com.dvpermyakov.dagger.utils.ContainerProvider
-import com.dvpermyakov.dagger.utils.ParameterData
+import com.dvpermyakov.dagger.utils.*
 import com.dvpermyakov.dagger.utils.element.*
-import com.dvpermyakov.dagger.utils.toClassName
-import com.dvpermyakov.dagger.utils.toProviderParameterData
 import com.squareup.kotlinpoet.*
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
 import javax.annotation.processing.Generated
@@ -125,7 +122,7 @@ class ComponentSpecFactory(
                                     val fieldTypeElement = fieldElement.asType().toElement(processingEnv)
                                     val fieldTypeClassName = fieldTypeElement.toClassName(processingEnv)
                                     graph.addElementWithInjectedConstructor(fieldTypeElement)
-                                    val fieldTypeProvider = "${fieldTypeClassName.simpleName.decapitalize()}Provider"
+                                    val fieldTypeProvider = fieldTypeClassName.toProviderName()
                                     addStatement("$parameterName.${fieldElement.simpleName} = $fieldTypeProvider.get()")
                                 }
                             })

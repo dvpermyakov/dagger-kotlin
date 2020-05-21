@@ -2,6 +2,7 @@ package com.dvpermyakov.dagger.graph
 
 import com.dvpermyakov.dagger.spec.property.ComponentProviderProperty
 import com.dvpermyakov.dagger.utils.element.*
+import com.dvpermyakov.dagger.utils.toProviderName
 import com.dvpermyakov.dagger.utils.toProviderParameterData
 import com.squareup.kotlinpoet.ClassName
 import com.squareup.kotlinpoet.PropertySpec
@@ -39,7 +40,7 @@ class ComponentGraphTraversing(private val processingEnv: ProcessingEnvironment)
 
                 val parameterData = className.toProviderParameterData()
                 val parameterNames = parameterElements.map { parameterElement ->
-                    parameterElement.simpleName.toString().decapitalize() + "Provider"
+                    parameterElement.toClassName(processingEnv).toProviderName()
                 }
                 val statementClassName = ClassName(className.packageName, "${className.simpleName}_Factory")
                 val statement = "%T(${parameterNames.joinToString(", ")})"
