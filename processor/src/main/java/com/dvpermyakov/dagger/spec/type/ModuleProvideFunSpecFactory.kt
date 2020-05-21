@@ -1,5 +1,6 @@
 package com.dvpermyakov.dagger.spec.type
 
+import com.dvpermyakov.dagger.spec.func.ConstructorSpecFactory
 import com.dvpermyakov.dagger.spec.func.OverrideGetFunSpecFactory
 import com.dvpermyakov.dagger.utils.*
 import com.squareup.kotlinpoet.*
@@ -19,19 +20,21 @@ class ModuleProvideFunSpecFactory(
         val moduleClassName = moduleElement.toClassName(processingEnv)
         val returnClassName = requireNotNull(methodElement.getReturnElement(processingEnv)).toClassName(processingEnv)
 
-        val parameters = methodElement
+        val methodParameters = methodElement
             .getParametersClassName(processingEnv)
             .map { parameterClassName -> parameterClassName.toProviderParameterData() }
         val moduleParameter = ParameterData(moduleClassName, "module")
+        val constructorParameters = listOf(moduleParameter) + methodParameters
 
         val getCodeStatement = "return ${moduleParameter.name}.${methodElement.simpleName}(" +
-            "${parameters.joinToString(", ") { parameter ->
+            "${methodParameters.joinToString(", ") { parameter ->
                 "${parameter.name}.get()"
             }})"
 
         return TypeSpec.classBuilder(className)
             .addAnnotation(Generated::class.java)
-            .setConstructorSpec(listOf(moduleParameter) + parameters)
+            .primaryConstructor(ConstructorSpecFactory(constructorParameters).create())
+            .setProperties(constructorParameters)
             .addSuperinterface(returnClassName.toFactoryClassName())
             .addFunction(
                 OverrideGetFunSpecFactory(
@@ -40,25 +43,5 @@ class ModuleProvideFunSpecFactory(
                 ).create()
             )
             .build()
-    }
-
-    private fun TypeSpec.Builder.setConstructorSpec(
-        parameters: List<ParameterData>
-    ): TypeSpec.Builder {
-        val funSpecBuilder = FunSpec.constructorBuilder()
-
-        parameters.forEach { parameter ->
-            funSpecBuilder.addParameter(parameter.name, parameter.typeName, KModifier.PRIVATE)
-        }
-
-        this.primaryConstructor(funSpecBuilder.build())
-
-        this.addProperties(
-            parameters.map { parameter ->
-                PropertySpec.builder(parameter.name, parameter.typeName).initializer(parameter.name).build()
-            }
-        )
-
-        return this
     }
 }
