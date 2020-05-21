@@ -11,11 +11,15 @@ internal fun ClassName.toProviderParameterData(): ParameterData {
 
     return ParameterData(
         typeName = parameterizedProviderClassName,
-        name = simpleName.decapitalize() + "Provider"
+        name = toProviderName()
     )
 }
 
 internal fun ClassName.toFactoryClassName(): ParameterizedTypeName {
     val factoryClassName = Factory::class.java.toClassName()
     return factoryClassName.parameterizedBy(this)
+}
+
+internal fun ClassName.toProviderName(): String {
+    return simpleName.decapitalize() + "Provider"
 }

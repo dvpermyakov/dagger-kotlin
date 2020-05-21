@@ -4,6 +4,7 @@ import com.dvpermyakov.dagger.annotation.BindsInstance
 import com.dvpermyakov.dagger.annotation.Component
 import com.dvpermyakov.dagger.graph.ComponentGraphTraversing
 import com.dvpermyakov.dagger.spec.func.ConstructorSpecFactory
+import com.dvpermyakov.dagger.spec.func.ComponentEmptyFunSpecFactory
 import com.dvpermyakov.dagger.spec.property.ComponentProviderProperty
 import com.dvpermyakov.dagger.utils.ContainerProvider
 import com.dvpermyakov.dagger.utils.ParameterData
@@ -101,13 +102,10 @@ class ComponentSpecFactory(
                 val returnTypeElement = methodElement.getReturnElement(processingEnv)
                 if (count == 0 && returnTypeElement != null) {
                     typeSpecBuilder.addFunction(
-                        FunSpec.builder(methodElement.simpleName.toString())
-                            .addModifiers(KModifier.OVERRIDE)
-                            .addStatement(
-                                "return ${returnTypeElement.simpleName.toString().decapitalize()}Provider.get()"
-                            )
-                            .returns(returnTypeElement.toClassName(processingEnv))
-                            .build()
+                        ComponentEmptyFunSpecFactory(
+                            methodName = methodElement.simpleName.toString(),
+                            returnTypeClassName = returnTypeElement.toClassName(processingEnv)
+                        ).create()
                     )
                     graph.addElementWithInjectedConstructor(returnTypeElement)
                 } else {
