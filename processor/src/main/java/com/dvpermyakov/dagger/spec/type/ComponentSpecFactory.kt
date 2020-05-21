@@ -2,6 +2,7 @@ package com.dvpermyakov.dagger.spec.type
 
 import com.dvpermyakov.dagger.annotation.BindsInstance
 import com.dvpermyakov.dagger.annotation.Component
+import com.dvpermyakov.dagger.spec.property.ComponentProviderProperty
 import com.dvpermyakov.dagger.utils.*
 import com.squareup.kotlinpoet.*
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
@@ -199,7 +200,9 @@ class ComponentSpecFactory(
             val statement = "%T(${parameterNames.joinToString(", ")})"
             val isSingleton = methodElement.hasAnnotation(processingEnv, Singleton::class.java)
 
-            addProviderProperty(parameterData, statement, statementClassName, isSingleton)
+            addProperty(
+                ComponentProviderProperty(parameterData, statement, statementClassName, isSingleton).create()
+            )
             componentProviders.add(returnClassName)
         }
 
@@ -227,11 +230,13 @@ class ComponentSpecFactory(
         val statement = "%T(${parameterClassName.simpleName.decapitalize()}Provider)"
         val isSingleton = methodElement.hasAnnotation(processingEnv, Singleton::class.java)
 
-        addProviderProperty(
-            returnTypeClassName.toProviderParameterData(),
-            statement,
-            statementClassNames,
-            isSingleton
+        addProperty(
+            ComponentProviderProperty(
+                returnTypeClassName.toProviderParameterData(),
+                statement,
+                statementClassNames,
+                isSingleton
+            ).create()
         )
 
         return this
@@ -259,7 +264,14 @@ class ComponentSpecFactory(
                 val statementClassName = ClassName(className.packageName, "${className.simpleName}_Factory")
                 val statement = "%T(${parameterNames.joinToString(", ")})"
                 val isSingleton = element.hasAnnotation(processingEnv, Singleton::class.java)
-                addProviderProperty(parameterData, statement, statementClassName, isSingleton)
+                addProperty(
+                    ComponentProviderProperty(
+                        parameterData,
+                        statement,
+                        statementClassName,
+                        isSingleton
+                    ).create()
+                )
                 componentProviders.add(className)
             }
         }
@@ -315,7 +327,7 @@ class ComponentSpecFactory(
                     val statement = "%T($dependencyName.${methodElement.simpleName}())"
                     val containerTypeName =
                         ContainerProvider::class.java.toClassName().parameterizedBy(returnTypeClassName)
-                    addProviderProperty(parameterData, statement, containerTypeName, false)
+                    addProperty(ComponentProviderProperty(parameterData, statement, containerTypeName, false).create())
                 }
             }
         }
@@ -324,7 +336,7 @@ class ComponentSpecFactory(
             val parameterData = bindsInstanceClassName.toProviderParameterData()
             val statement = "%T(${bindsInstanceClassName.simpleName.decapitalize()})"
             val containerTypeName = ContainerProvider::class.java.toClassName().parameterizedBy(bindsInstanceClassName)
-            addProviderProperty(parameterData, statement, containerTypeName, false)
+            addProperty(ComponentProviderProperty(parameterData, statement, containerTypeName, false).create())
         }
 
         val dependenciesStatement = dependencyClassNames.map { it.simpleName.decapitalize() }
@@ -364,27 +376,6 @@ class ComponentSpecFactory(
         }
 
         this.addType(companionSpecBuilder.build())
-
-        return this
-    }
-
-    private fun TypeSpec.Builder.addProviderProperty(
-        parameterData: ParameterData,
-        initializer: String,
-        initializerTypeName: TypeName,
-        isSingleton: Boolean
-    ): TypeSpec.Builder {
-        val propertySpec = if (isSingleton) {
-            val doubleCheckClassName = DoubleCheckProvider::class.java.toClassName()
-            PropertySpec.builder(parameterData.name, parameterData.typeName, KModifier.PRIVATE)
-                .initializer("%T($initializer)", doubleCheckClassName, initializerTypeName)
-                .build()
-        } else {
-            PropertySpec.builder(parameterData.name, parameterData.typeName, KModifier.PRIVATE)
-                .initializer(initializer, initializerTypeName)
-                .build()
-        }
-        this.addProperty(propertySpec)
 
         return this
     }
