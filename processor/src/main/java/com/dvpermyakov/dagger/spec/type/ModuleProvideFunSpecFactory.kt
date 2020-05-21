@@ -55,11 +55,11 @@ class ModuleProvideFunSpecFactory(
         this.primaryConstructor(funSpecBuilder.build())
         this.addProperty(PropertySpec.builder("module", moduleTypeName).initializer("module").build())
 
-        parameters.forEach { parameter ->
-            this.addProperty(
+        this.addProperties(
+            parameters.map { parameter ->
                 PropertySpec.builder(parameter.name, parameter.typeName).initializer(parameter.name).build()
-            )
-        }
+            }
+        )
 
         return this
     }
