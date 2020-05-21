@@ -5,7 +5,7 @@ import com.squareup.kotlinpoet.ParameterizedTypeName
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
 import javax.inject.Provider
 
-fun ClassName.toProviderParameterData(): ParameterData {
+internal fun ClassName.toProviderParameterData(): ParameterData {
     val providerClassName = Provider::class.java.toClassName()
     val parameterizedProviderClassName = providerClassName.parameterizedBy(this)
 
@@ -15,7 +15,7 @@ fun ClassName.toProviderParameterData(): ParameterData {
     )
 }
 
-fun ClassName.toFactoryClassName(): ParameterizedTypeName {
+internal fun ClassName.toFactoryClassName(): ParameterizedTypeName {
     val factoryClassName = Factory::class.java.toClassName()
     return factoryClassName.parameterizedBy(this)
 }
