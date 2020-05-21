@@ -2,6 +2,7 @@ package com.dvpermyakov.dagger.spec.type
 
 import com.dvpermyakov.dagger.annotation.BindsInstance
 import com.dvpermyakov.dagger.annotation.Component
+import com.dvpermyakov.dagger.graph.ComponentGraphTraversing
 import com.dvpermyakov.dagger.spec.func.ConstructorSpecFactory
 import com.dvpermyakov.dagger.spec.property.ComponentProviderProperty
 import com.dvpermyakov.dagger.utils.ContainerProvider
@@ -14,9 +15,7 @@ import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
 import javax.annotation.processing.Generated
 import javax.annotation.processing.ProcessingEnvironment
 import javax.inject.Inject
-import javax.inject.Singleton
 import javax.lang.model.element.Element
-import javax.lang.model.element.ExecutableElement
 
 class ComponentSpecFactory(
     private val processingEnv: ProcessingEnvironment,
@@ -25,14 +24,9 @@ class ComponentSpecFactory(
 ) : TypeSpecFactory {
 
     private val componentClassName: ClassName = componentElement.toClassName(processingEnv)
-
-    // return type element to method element
-    private val moduleMethodMap = mutableMapOf<Element, ExecutableElement>()
-    private val componentProviders = mutableSetOf<TypeName>()
+    private val graph = ComponentGraphTraversing(processingEnv)
 
     override fun create(): TypeSpec {
-        componentProviders.clear()
-
         val typeSpecBuilder = TypeSpec.classBuilder(className)
             .addAnnotation(Generated::class.java)
 
@@ -82,22 +76,13 @@ class ComponentSpecFactory(
             )
             .addSuperinterface(componentClassName)
 
-        moduleElements
-            .forEach { moduleElement ->
-                moduleElement.getMethodElements().forEach { methodElement ->
-                    val returnTypeElement = requireNotNull(methodElement.getReturnElement(processingEnv))
-                    moduleMethodMap[returnTypeElement] = methodElement
-                }
-            }
+        graph.initWithModules(moduleElements)
 
         moduleElements
             .excludeInterfaces()
             .forEach { moduleElement ->
                 moduleElement.getMethodElements().forEach { methodElement ->
-                    typeSpecBuilder.addProviderForElementWithModule(
-                        methodElement = methodElement,
-                        moduleElement = moduleElement
-                    )
+                    graph.addElementInModule(methodElement, moduleElement)
                 }
             }
 
@@ -105,10 +90,7 @@ class ComponentSpecFactory(
             .interfacesOnly()
             .forEach { moduleElement ->
                 moduleElement.getMethodElements().forEach { methodElement ->
-                    typeSpecBuilder.addProviderForBinder(
-                        methodElement = methodElement,
-                        moduleElement = moduleElement
-                    )
+                    graph.addElementWithBinds(methodElement, moduleElement)
                 }
             }
 
@@ -127,7 +109,7 @@ class ComponentSpecFactory(
                             .returns(returnTypeElement.toClassName(processingEnv))
                             .build()
                     )
-                    typeSpecBuilder.addProviderForElement(returnTypeElement)
+                    graph.addElementWithInjectedConstructor(returnTypeElement)
                 } else {
                     val parameterTypeElement = methodElement.parameters.first()
                     val parameterElement = parameterTypeElement.asType().toElement(processingEnv)
@@ -144,9 +126,7 @@ class ComponentSpecFactory(
                                 fieldElements.forEach { fieldElement ->
                                     val fieldTypeElement = fieldElement.asType().toElement(processingEnv)
                                     val fieldTypeClassName = fieldTypeElement.toClassName(processingEnv)
-                                    if (!componentProviders.contains(fieldTypeClassName)) {
-                                        typeSpecBuilder.addProviderForElement(fieldTypeElement)
-                                    }
+                                    graph.addElementWithInjectedConstructor(fieldTypeElement)
                                     val fieldTypeProvider = "${fieldTypeClassName.simpleName.decapitalize()}Provider"
                                     addStatement("$parameterName.${fieldElement.simpleName} = $fieldTypeProvider.get()")
                                 }
@@ -156,117 +136,9 @@ class ComponentSpecFactory(
                 }
             }
 
+        typeSpecBuilder.addProperties(graph.getProperties())
+
         return typeSpecBuilder.build()
-    }
-
-    private fun TypeSpec.Builder.addProviderForElementWithModule(
-        methodElement: ExecutableElement,
-        moduleElement: Element
-    ): TypeSpec.Builder {
-        val moduleClassName = moduleElement.toClassName(processingEnv)
-        val returnTypeElement = requireNotNull(methodElement.getReturnElement(processingEnv))
-        val returnClassName = returnTypeElement.toClassName(processingEnv)
-
-        if (!componentProviders.contains(returnClassName)) {
-            val parameterElements = methodElement.getParameterElements(processingEnv)
-            parameterElements.forEach { parameterElement ->
-                val parameterClassName = parameterElement.toClassName(processingEnv)
-                if (!componentProviders.contains(parameterClassName)) {
-                    addProviderForElementWithModule(
-                        methodElement = requireNotNull(moduleMethodMap[parameterElement]),
-                        moduleElement = moduleElement
-                    )
-                }
-            }
-
-            val parameterData = returnClassName.toProviderParameterData()
-            val parameterClassNames = parameterElements.toClassNames(processingEnv)
-            val parameterNames =
-                listOf(moduleClassName.simpleName.decapitalize()) + parameterClassNames.map { it.simpleName.decapitalize() + "Provider" }
-            val statementClassName = ClassName(
-                moduleClassName.packageName,
-                "${moduleClassName.simpleName}_${returnTypeElement.simpleName}_Factory"
-            )
-            val statement = "%T(${parameterNames.joinToString(", ")})"
-            val isSingleton = methodElement.hasAnnotation(processingEnv, Singleton::class.java)
-
-            addProperty(
-                ComponentProviderProperty(parameterData, statement, statementClassName, isSingleton).create()
-            )
-            componentProviders.add(returnClassName)
-        }
-
-        return this
-    }
-
-    private fun TypeSpec.Builder.addProviderForBinder(
-        methodElement: ExecutableElement,
-        moduleElement: Element
-    ): TypeSpec.Builder {
-        val returnTypeElement = requireNotNull(methodElement.getReturnElement(processingEnv))
-        val returnTypeClassName = returnTypeElement.toClassName(processingEnv)
-
-        val parameterElement = methodElement.getParameterElements(processingEnv).first()
-        val parameterClassName = parameterElement.toClassName(processingEnv)
-        if (!componentProviders.contains(parameterClassName)) {
-            addProviderForElement(parameterElement)
-        }
-
-        val moduleClassName = moduleElement.toClassName(processingEnv)
-        val statementClassNames = ClassName(
-            moduleClassName.packageName,
-            "${moduleClassName.simpleName}_${returnTypeElement.simpleName}_Binder"
-        )
-        val statement = "%T(${parameterClassName.simpleName.decapitalize()}Provider)"
-        val isSingleton = methodElement.hasAnnotation(processingEnv, Singleton::class.java)
-
-        addProperty(
-            ComponentProviderProperty(
-                returnTypeClassName.toProviderParameterData(),
-                statement,
-                statementClassNames,
-                isSingleton
-            ).create()
-        )
-
-        return this
-    }
-
-    private fun TypeSpec.Builder.addProviderForElement(
-        element: Element
-    ): TypeSpec.Builder {
-        val className = element.toClassName(processingEnv)
-        if (!componentProviders.contains(className)) {
-            val constructorElement = element.getConstructor()
-            if (constructorElement?.hasAnnotation(processingEnv, Inject::class.java) == true) {
-                val parameterElements = constructorElement
-                    .getParameterElements(processingEnv)
-
-                parameterElements.forEach { parameterElement ->
-                    addProviderForElement(parameterElement)
-                }
-
-                val parameterData = className.toProviderParameterData()
-                componentProviders.add(className)
-                val parameterNames = parameterElements.map { constructorParameterElement ->
-                    constructorParameterElement.simpleName.toString().decapitalize() + "Provider"
-                }
-                val statementClassName = ClassName(className.packageName, "${className.simpleName}_Factory")
-                val statement = "%T(${parameterNames.joinToString(", ")})"
-                val isSingleton = element.hasAnnotation(processingEnv, Singleton::class.java)
-                addProperty(
-                    ComponentProviderProperty(
-                        parameterData,
-                        statement,
-                        statementClassName,
-                        isSingleton
-                    ).create()
-                )
-                componentProviders.add(className)
-            }
-        }
-
-        return this
     }
 
     private fun TypeSpec.Builder.setFactoryCompanionObjectSpec(
