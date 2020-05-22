@@ -1,7 +1,6 @@
 package com.dvpermyakov.dagger.spec.type
 
 import com.dvpermyakov.dagger.utils.element.toClassName
-import com.dvpermyakov.dagger.utils.element.toClassNames
 import com.dvpermyakov.dagger.utils.setParameterDataList
 import com.dvpermyakov.dagger.utils.toParameterData
 import com.squareup.kotlinpoet.ClassName
@@ -18,37 +17,31 @@ class FactoryCompanionObjectSpec(
     private val factoryInterfaceElement: Element?,
     private val factoryMethodElement: Element?,
     private val moduleClassNames: List<ClassName>,
-    private val dependencyElements: List<Element>,
-    private val bindsInstanceClassNames: List<ClassName>
+    private val otherClassNames: List<ClassName>
 ) : TypeSpecFactory {
 
     override fun create(): TypeSpec {
-        val dependencyClassNames = dependencyElements.toClassNames(processingEnv)
-
-        val dependenciesStatement = dependencyClassNames.map { it.simpleName.decapitalize() }
-        val bindsStatement = bindsInstanceClassNames.map { it.simpleName.decapitalize() }
+        val otherStatement = otherClassNames.map { otherClassName ->
+            val name = otherClassName.simpleName.decapitalize()
+            "$name = $name"
+        }
         val modulesStatement = List(moduleClassNames.size) { "%T()" }
-        val statementCode = (modulesStatement + dependenciesStatement + bindsStatement).joinToString(", ")
+        val statementCode = (modulesStatement + otherStatement).joinToString(", ")
         val statement = "return $className(%s)".format(statementCode)
 
-        val bindsParameters = bindsInstanceClassNames.map { bindsInstanceClassName ->
-            bindsInstanceClassName.toParameterData()
-        }
-        val dependencyParameters = dependencyClassNames.map { dependencyClassName ->
-            dependencyClassName.toParameterData()
+        val otherParameters = otherClassNames.map { otherClassName ->
+            otherClassName.toParameterData()
         }
         val createFunSpec = if (factoryMethodElement != null) {
             FunSpec.builder(factoryMethodElement.simpleName.toString())
-                .setParameterDataList(dependencyParameters)
-                .setParameterDataList(bindsParameters)
+                .setParameterDataList(otherParameters)
                 .addModifiers(KModifier.OVERRIDE)
                 .returns(componentClassName)
                 .addStatement(statement, *moduleClassNames.toTypedArray())
                 .build()
         } else {
             FunSpec.builder("create")
-                .setParameterDataList(dependencyParameters)
-                .setParameterDataList(bindsParameters)
+                .setParameterDataList(otherParameters)
                 .returns(componentClassName)
                 .addStatement(statement, *moduleClassNames.toTypedArray())
                 .build()

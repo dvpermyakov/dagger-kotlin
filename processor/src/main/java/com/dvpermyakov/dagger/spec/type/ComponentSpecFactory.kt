@@ -44,7 +44,6 @@ class ComponentSpecFactory(
             ?.map { variableElement ->
                 variableElement.asType().toElement(processingEnv)
             } ?: emptyList()
-        val bindsInstanceClassNames = bindsInstanceElements.toClassNames(processingEnv)
 
         val moduleElements = componentElement.getAnnotationElements(processingEnv, Component::class.java, 0)
         val moduleClassNamesExcludeInterfaces = moduleElements
@@ -53,7 +52,9 @@ class ComponentSpecFactory(
         val dependencyElements = componentElement.getAnnotationElements(processingEnv, Component::class.java, 1)
 
         val constructorParameters = (
-             moduleClassNamesExcludeInterfaces + dependencyElements.toClassNames(processingEnv) + bindsInstanceClassNames
+            moduleClassNamesExcludeInterfaces +
+                dependencyElements.toClassNames(processingEnv) +
+                bindsInstanceElements.toClassNames(processingEnv)
             ).map { className ->
                 className.toParameterData()
             }
@@ -68,8 +69,7 @@ class ComponentSpecFactory(
                     factoryInterfaceElement = factoryInterfaceElement,
                     factoryMethodElement = factoryCreateFunction,
                     moduleClassNames = moduleClassNamesExcludeInterfaces,
-                    dependencyElements = dependencyElements,
-                    bindsInstanceClassNames = bindsInstanceClassNames
+                    otherClassNames = factoryCreateFunction?.getParametersClassName(processingEnv) ?: emptyList()
                 ).create()
             )
             .addSuperinterface(componentClassName)

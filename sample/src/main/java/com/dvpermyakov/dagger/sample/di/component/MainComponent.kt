@@ -27,8 +27,8 @@ interface MainComponent {
     @Component.Factory
     interface Factory {
         fun createNewInstance(
-            dataDependencies: DataDependencies,
             @BindsInstance nConfig: NetworkConfig,
+            dataDependencies: DataDependencies,
             @BindsInstance dConfig: DatabaseConfig
         ): MainComponent
     }
