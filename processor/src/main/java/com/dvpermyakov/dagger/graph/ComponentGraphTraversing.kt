@@ -1,10 +1,13 @@
 package com.dvpermyakov.dagger.graph
 
 import com.dvpermyakov.dagger.spec.property.ComponentProviderProperty
+import com.dvpermyakov.dagger.utils.ContainerProvider
 import com.dvpermyakov.dagger.utils.element.*
+import com.dvpermyakov.dagger.utils.toClassName
 import com.dvpermyakov.dagger.utils.toProviderName
 import com.dvpermyakov.dagger.utils.toProviderParameterData
 import com.squareup.kotlinpoet.ClassName
+import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
 import com.squareup.kotlinpoet.PropertySpec
 import javax.annotation.processing.ProcessingEnvironment
 import javax.inject.Inject
@@ -25,7 +28,46 @@ class ComponentGraphTraversing(private val processingEnv: ProcessingEnvironment)
                     moduleMethodMap[returnTypeElement] = methodElement
                 }
             }
-        nodesProperty.clear()
+    }
+
+    fun addElementsWithBindsInstance(elements: List<Element>) {
+        elements.map { element ->
+            element.toClassName(processingEnv)
+        }.forEach { bindsInstanceClassName ->
+            val parameterData = bindsInstanceClassName.toProviderParameterData()
+            val statement = "%T(${bindsInstanceClassName.simpleName.decapitalize()})"
+            val containerTypeName = ContainerProvider::class.java.toClassName().parameterizedBy(bindsInstanceClassName)
+            nodesProperty[bindsInstanceClassName] = ComponentProviderProperty(
+                parameterData,
+                statement,
+                containerTypeName,
+                false
+            ).create()
+        }
+    }
+
+    fun addDependencyElements(elements: List<Element>) {
+        elements.forEach { dependencyElement ->
+            val dependencyName = dependencyElement.simpleName.toString().decapitalize()
+            dependencyElement
+                .getMethodElements()
+                .forEach { methodElement ->
+                    if (methodElement.parameters.isEmpty()) {
+                        val returnTypeElement = requireNotNull(methodElement.getReturnElement(processingEnv))
+                        val returnTypeClassName = returnTypeElement.toClassName(processingEnv)
+                        val parameterData = returnTypeClassName.toProviderParameterData()
+                        val statement = "%T($dependencyName.${methodElement.simpleName}())"
+                        val containerTypeName =
+                            ContainerProvider::class.java.toClassName().parameterizedBy(returnTypeClassName)
+                        nodesProperty[returnTypeClassName] = ComponentProviderProperty(
+                            parameterData,
+                            statement,
+                            containerTypeName,
+                            false
+                        ).create()
+                    }
+                }
+        }
     }
 
     fun addElementWithInjectedConstructor(element: Element) {

@@ -5,14 +5,9 @@ import com.dvpermyakov.dagger.annotation.Component
 import com.dvpermyakov.dagger.graph.ComponentGraphTraversing
 import com.dvpermyakov.dagger.spec.func.ComponentFunSpecFactory
 import com.dvpermyakov.dagger.spec.func.ConstructorSpecFactory
-import com.dvpermyakov.dagger.spec.property.ComponentProviderProperty
-import com.dvpermyakov.dagger.utils.ContainerProvider
 import com.dvpermyakov.dagger.utils.element.*
-import com.dvpermyakov.dagger.utils.toClassName
 import com.dvpermyakov.dagger.utils.toParameterData
-import com.dvpermyakov.dagger.utils.toProviderParameterData
 import com.squareup.kotlinpoet.ClassName
-import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
 import com.squareup.kotlinpoet.TypeSpec
 import javax.annotation.processing.Generated
 import javax.annotation.processing.ProcessingEnvironment
@@ -58,7 +53,7 @@ class ComponentSpecFactory(
         val dependencyElements = componentElement.getAnnotationElements(processingEnv, Component::class.java, 1)
 
         val constructorParameters = (
-            bindsInstanceClassNames + moduleClassNamesExcludeInterfaces + dependencyElements.toClassNames(processingEnv)
+             moduleClassNamesExcludeInterfaces + dependencyElements.toClassNames(processingEnv) + bindsInstanceClassNames
             ).map { className ->
                 className.toParameterData()
             }
@@ -79,44 +74,8 @@ class ComponentSpecFactory(
             )
             .addSuperinterface(componentClassName)
 
-        dependencyElements.forEach { dependencyElement ->
-            val dependencyName = dependencyElement.simpleName.toString().decapitalize()
-            dependencyElement
-                .getMethodElements()
-                .forEach { methodElement ->
-                    if (methodElement.parameters.isEmpty()) {
-                        val returnTypeElement = requireNotNull(methodElement.getReturnElement(processingEnv))
-                        val returnTypeClassName = returnTypeElement.toClassName(processingEnv)
-                        val parameterData = returnTypeClassName.toProviderParameterData()
-                        val statement = "%T($dependencyName.${methodElement.simpleName}())"
-                        val containerTypeName =
-                            ContainerProvider::class.java.toClassName().parameterizedBy(returnTypeClassName)
-                        typeSpecBuilder.addProperty(
-                            ComponentProviderProperty(
-                                parameterData,
-                                statement,
-                                containerTypeName,
-                                false
-                            ).create()
-                        )
-                    }
-                }
-        }
-
-        bindsInstanceClassNames.forEach { bindsInstanceClassName ->
-            val parameterData = bindsInstanceClassName.toProviderParameterData()
-            val statement = "%T(${bindsInstanceClassName.simpleName.decapitalize()})"
-            val containerTypeName = ContainerProvider::class.java.toClassName().parameterizedBy(bindsInstanceClassName)
-            typeSpecBuilder.addProperty(
-                ComponentProviderProperty(
-                    parameterData,
-                    statement,
-                    containerTypeName,
-                    false
-                ).create()
-            )
-        }
-
+        graph.addElementsWithBindsInstance(bindsInstanceElements)
+        graph.addDependencyElements(dependencyElements)
         graph.initWithModules(moduleElements)
 
         moduleElements
