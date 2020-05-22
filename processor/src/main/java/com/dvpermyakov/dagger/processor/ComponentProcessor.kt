@@ -2,8 +2,8 @@ package com.dvpermyakov.dagger.processor
 
 import com.dvpermyakov.dagger.annotation.Component
 import com.dvpermyakov.dagger.spec.type.ComponentSpecFactory
-import com.dvpermyakov.dagger.utils.getQualifiedPackageName
-import com.dvpermyakov.dagger.utils.writeToDaggerKotlin
+import com.dvpermyakov.dagger.utils.element.getQualifiedPackageName
+import com.dvpermyakov.dagger.utils.spec.writeToDaggerKotlin
 import com.google.auto.service.AutoService
 import com.squareup.kotlinpoet.FileSpec
 import javax.annotation.processing.AbstractProcessor

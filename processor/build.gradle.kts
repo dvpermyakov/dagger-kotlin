@@ -25,4 +25,8 @@ dependencies {
     implementation("com.squareup:kotlinpoet:1.5.0")
     implementation("com.google.auto.service:auto-service:1.0-rc7")
     kapt("com.google.auto.service:auto-service:1.0-rc7")
+
+    testImplementation("junit:junit:4.13")
+    testImplementation("io.mockk:mockk:1.10.0")
+    testImplementation("com.google.testing.compile:compile-testing:0.18")
 }

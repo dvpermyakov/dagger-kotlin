@@ -1,8 +1,10 @@
 package com.dvpermyakov.dagger.sample
 
+import com.dvpermyakov.dagger.sample.data.Data
 import com.dvpermyakov.dagger.sample.data.DatabaseConfig
 import com.dvpermyakov.dagger.sample.data.NetworkConfig
 import com.dvpermyakov.dagger.sample.di.component.KDaggerMainComponent
+import com.dvpermyakov.dagger.sample.di.dependencies.DataDependencies
 import com.dvpermyakov.dagger.sample.domain.TransactionModel
 import com.dvpermyakov.dagger.sample.presentation.TransactionView
 import org.junit.Assert
@@ -14,7 +16,10 @@ class MainComponentTest {
     fun getTransactionViewModel() {
         val component = KDaggerMainComponent.createNewInstance(
             networkConfig = NetworkConfig(),
-            databaseConfig = DatabaseConfig()
+            databaseConfig = DatabaseConfig(),
+            dataDependencies = object : DataDependencies {
+                override fun getData() = Data()
+            }
         )
         val transactions = component.getTransactionViewModel().findAllTransactions()
         Assert.assertEquals(
@@ -32,7 +37,10 @@ class MainComponentTest {
     fun injectTransactionView() {
         val component = KDaggerMainComponent.createNewInstance(
             networkConfig = NetworkConfig(),
-            databaseConfig = DatabaseConfig()
+            databaseConfig = DatabaseConfig(),
+            dataDependencies = object : DataDependencies {
+                override fun getData() = Data()
+            }
         )
         val view = TransactionView()
         component.inject(view)

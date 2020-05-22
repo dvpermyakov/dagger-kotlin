@@ -1,8 +1,15 @@
 package com.dvpermyakov.dagger.spec.type
 
+import com.dvpermyakov.dagger.spec.func.ConstructorSpecFactory
 import com.dvpermyakov.dagger.spec.func.OverrideGetFunSpecFactory
 import com.dvpermyakov.dagger.utils.*
-import com.squareup.kotlinpoet.*
+import com.dvpermyakov.dagger.utils.element.getParametersClassName
+import com.dvpermyakov.dagger.utils.element.getReturnElement
+import com.dvpermyakov.dagger.utils.element.toClassName
+import com.dvpermyakov.dagger.utils.spec.setProperties
+import com.dvpermyakov.dagger.utils.className.toFactoryClassName
+import com.dvpermyakov.dagger.utils.className.toProviderParameterData
+import com.squareup.kotlinpoet.TypeSpec
 import javax.annotation.processing.Generated
 import javax.annotation.processing.ProcessingEnvironment
 import javax.lang.model.element.ExecutableElement
@@ -20,9 +27,12 @@ class ModuleBindFunSpecFactory(
             .getParametersClassName(processingEnv)
             .first()
 
+        val factoryParameter = ParameterData(parameterClassName.toProviderParameterData().typeName, "factory")
+
         return TypeSpec.classBuilder(className)
             .addAnnotation(Generated::class.java)
-            .setConstructorSpec(parameterClassName.toProviderParameterData().typeName)
+            .primaryConstructor(ConstructorSpecFactory(listOf(factoryParameter)).create())
+            .setProperties(listOf(factoryParameter))
             .addSuperinterface(returnClassName.toFactoryClassName())
             .addFunction(
                 OverrideGetFunSpecFactory(
@@ -31,24 +41,6 @@ class ModuleBindFunSpecFactory(
                 ).create()
             )
             .build()
-    }
-
-    private fun TypeSpec.Builder.setConstructorSpec(
-        factoryTypeName: TypeName
-    ): TypeSpec.Builder {
-
-        val factoryName = "factory"
-        val funSpec = FunSpec.constructorBuilder()
-            .addParameter(factoryName, factoryTypeName, KModifier.PRIVATE)
-            .build()
-        val propertySpec = PropertySpec.builder(factoryName, factoryTypeName)
-            .initializer(factoryName)
-            .build()
-
-        this.primaryConstructor(funSpec)
-        this.addProperty(propertySpec)
-
-        return this
     }
 
 }

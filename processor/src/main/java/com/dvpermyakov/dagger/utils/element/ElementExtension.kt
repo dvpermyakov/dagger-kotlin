@@ -1,18 +1,8 @@
-package com.dvpermyakov.dagger.utils
+package com.dvpermyakov.dagger.utils.element
 
 import com.squareup.kotlinpoet.ClassName
 import javax.annotation.processing.ProcessingEnvironment
-import javax.lang.model.element.AnnotationMirror
-import javax.lang.model.element.Element
-import javax.lang.model.element.ElementKind
-import javax.lang.model.element.ExecutableElement
-import javax.lang.model.type.TypeMirror
-
-internal fun TypeMirror.toElement(
-    processingEnv: ProcessingEnvironment
-): Element {
-    return processingEnv.typeUtils.asElement(this)
-}
+import javax.lang.model.element.*
 
 internal fun Element.getQualifiedPackageName(
     processingEnv: ProcessingEnvironment
@@ -29,14 +19,6 @@ internal fun Element.toClassName(
 
     val packageName = getQualifiedPackageName(processingEnv)
     return ClassName(packageName, name)
-}
-
-internal fun List<Element>.toClassNames(
-    processingEnv: ProcessingEnvironment
-): List<ClassName> {
-    return map { element ->
-        element.toClassName(processingEnv)
-    }
 }
 
 internal fun Element.getMethodElements(): List<ExecutableElement> {
@@ -56,18 +38,6 @@ internal fun Element.getFieldElements(): List<Element> {
         }
 }
 
-internal fun List<Element>.excludeInterfaces(): List<Element> {
-    return filter { element ->
-        element.kind != ElementKind.INTERFACE
-    }
-}
-
-internal fun List<Element>.interfacesOnly(): List<Element> {
-    return filter { element ->
-        element.kind == ElementKind.INTERFACE
-    }
-}
-
 internal fun Element.getNestedInterfaces(): List<Element> {
     return enclosedElements
         .filter { enclosedElement ->
@@ -79,26 +49,6 @@ internal fun Element.getConstructor(): ExecutableElement? {
     return enclosedElements.firstOrNull { enclosedElement ->
         enclosedElement.kind == ElementKind.CONSTRUCTOR
     } as? ExecutableElement
-}
-
-internal fun ExecutableElement.getReturnElement(
-    processingEnv: ProcessingEnvironment
-): Element? {
-    return processingEnv.typeUtils.asElement(returnType)
-}
-
-internal fun ExecutableElement.getParameterElements(
-    processingEnv: ProcessingEnvironment
-): List<Element> {
-    return parameters.map { parameter ->
-        processingEnv.typeUtils.asElement(parameter.asType())
-    }
-}
-
-internal fun ExecutableElement.getParametersClassName(
-    processingEnv: ProcessingEnvironment
-): List<ClassName> {
-    return getParameterElements(processingEnv).toClassNames(processingEnv)
 }
 
 internal fun Element.findAnnotation(
@@ -120,4 +70,17 @@ internal fun Element.hasAnnotation(
     annotationClass: Class<*>
 ): Boolean {
     return findAnnotation(processingEnv, annotationClass) != null
+}
+
+internal fun Element.getAnnotationElements(
+    processingEnv: ProcessingEnvironment,
+    annotationClass: Class<*>,
+    index: Int
+): List<Element> {
+    val annotation = requireNotNull(this.findAnnotation(processingEnv, annotationClass))
+    val annotationIndexValue = annotation.elementValues.entries.elementAt(index).value
+    return (annotationIndexValue.value as? List<*>)?.map { annotationValue ->
+        val classValue = (annotationValue as AnnotationValue).value.toString()
+        processingEnv.elementUtils.getAllTypeElements(classValue).first()
+    } ?: throw IllegalStateException("$annotationClass element should contain a list of items")
 }
