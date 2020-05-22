@@ -11,8 +11,9 @@ import com.dvpermyakov.dagger.utils.ParameterData
 import com.dvpermyakov.dagger.utils.element.*
 import com.dvpermyakov.dagger.utils.toClassName
 import com.dvpermyakov.dagger.utils.toProviderParameterData
-import com.squareup.kotlinpoet.*
+import com.squareup.kotlinpoet.ClassName
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
+import com.squareup.kotlinpoet.TypeSpec
 import javax.annotation.processing.Generated
 import javax.annotation.processing.ProcessingEnvironment
 import javax.lang.model.element.Element
@@ -65,14 +66,57 @@ class ComponentSpecFactory(
                 ParameterData(className, className.simpleName.decapitalize())
             }
 
+        dependencyElements.forEach { dependencyElement ->
+            val dependencyName = dependencyElement.simpleName.toString().decapitalize()
+            dependencyElement
+                .getMethodElements()
+                .forEach { methodElement ->
+                    if (methodElement.parameters.isEmpty()) {
+                        val returnTypeElement = requireNotNull(methodElement.getReturnElement(processingEnv))
+                        val returnTypeClassName = returnTypeElement.toClassName(processingEnv)
+                        val parameterData = returnTypeClassName.toProviderParameterData()
+                        val statement = "%T($dependencyName.${methodElement.simpleName}())"
+                        val containerTypeName =
+                            ContainerProvider::class.java.toClassName().parameterizedBy(returnTypeClassName)
+                        typeSpecBuilder.addProperty(
+                            ComponentProviderProperty(
+                                parameterData,
+                                statement,
+                                containerTypeName,
+                                false
+                            ).create()
+                        )
+                    }
+                }
+        }
+
+        bindsInstanceClassNames.forEach { bindsInstanceClassName ->
+            val parameterData = bindsInstanceClassName.toProviderParameterData()
+            val statement = "%T(${bindsInstanceClassName.simpleName.decapitalize()})"
+            val containerTypeName = ContainerProvider::class.java.toClassName().parameterizedBy(bindsInstanceClassName)
+            typeSpecBuilder.addProperty(
+                ComponentProviderProperty(
+                    parameterData,
+                    statement,
+                    containerTypeName,
+                    false
+                ).create()
+            )
+        }
+
         typeSpecBuilder
             .primaryConstructor(ConstructorSpecFactory(constructorParameters).create())
-            .setFactoryCompanionObjectSpec(
-                factoryInterfaceElement = factoryInterfaceElement,
-                factoryMethodElement = factoryCreateFunction,
-                moduleClassNames = moduleClassNamesExcludeInterfaces,
-                dependencyElements = dependencyElements,
-                bindsInstanceClassNames = bindsInstanceClassNames
+            .addType(
+                FactoryCompanionObjectSpec(
+                    processingEnv = processingEnv,
+                    className = className,
+                    componentClassName = componentClassName,
+                    factoryInterfaceElement = factoryInterfaceElement,
+                    factoryMethodElement = factoryCreateFunction,
+                    moduleClassNames = moduleClassNamesExcludeInterfaces,
+                    dependencyElements = dependencyElements,
+                    bindsInstanceClassNames = bindsInstanceClassNames
+                ).create()
             )
             .addSuperinterface(componentClassName)
 
@@ -97,87 +141,15 @@ class ComponentSpecFactory(
         componentElement
             .getMethodElements()
             .map { methodElement ->
-                typeSpecBuilder.addFunction(ComponentFunSpecFactory(
-                    processingEnv = processingEnv,
-                    graph = graph,
-                    methodElement = methodElement
-                ).create())
+                typeSpecBuilder.addFunction(
+                    ComponentFunSpecFactory(
+                        processingEnv = processingEnv,
+                        graph = graph,
+                        methodElement = methodElement
+                    ).create()
+                )
             }
 
         return typeSpecBuilder.addProperties(graph.getProperties()).build()
-    }
-
-    private fun TypeSpec.Builder.setFactoryCompanionObjectSpec(
-        factoryInterfaceElement: Element?,
-        factoryMethodElement: Element?,
-        moduleClassNames: List<ClassName>,
-        dependencyElements: List<Element>,
-        bindsInstanceClassNames: List<ClassName>
-    ): TypeSpec.Builder {
-
-        val dependencyClassNames = dependencyElements.toClassNames(processingEnv)
-
-        dependencyElements.forEach { dependencyElement ->
-            val dependencyName = dependencyElement.simpleName.toString().decapitalize()
-            val methodElements = dependencyElement.getMethodElements()
-            methodElements.forEach { methodElement ->
-                if (methodElement.parameters.isEmpty()) {
-                    val returnTypeElement = requireNotNull(methodElement.getReturnElement(processingEnv))
-                    val returnTypeClassName = returnTypeElement.toClassName(processingEnv)
-                    val parameterData = returnTypeClassName.toProviderParameterData()
-                    val statement = "%T($dependencyName.${methodElement.simpleName}())"
-                    val containerTypeName =
-                        ContainerProvider::class.java.toClassName().parameterizedBy(returnTypeClassName)
-                    addProperty(ComponentProviderProperty(parameterData, statement, containerTypeName, false).create())
-                }
-            }
-        }
-
-        bindsInstanceClassNames.forEach { bindsInstanceClassName ->
-            val parameterData = bindsInstanceClassName.toProviderParameterData()
-            val statement = "%T(${bindsInstanceClassName.simpleName.decapitalize()})"
-            val containerTypeName = ContainerProvider::class.java.toClassName().parameterizedBy(bindsInstanceClassName)
-            addProperty(ComponentProviderProperty(parameterData, statement, containerTypeName, false).create())
-        }
-
-        val dependenciesStatement = dependencyClassNames.map { it.simpleName.decapitalize() }
-        val bindsStatement = bindsInstanceClassNames.map { it.simpleName.decapitalize() }
-        val modulesStatement = List(moduleClassNames.size) { "%T()" }
-        val statementCode = (modulesStatement + dependenciesStatement + bindsStatement).joinToString(", ")
-        val statement = "return $className(%s)".format(statementCode)
-
-        val bindsParameters = bindsInstanceClassNames.map { bindsInstanceClassName ->
-            val bindsInstanceName = bindsInstanceClassName.simpleName.decapitalize()
-            ParameterSpec.builder(bindsInstanceName, bindsInstanceClassName).build()
-        }
-        val dependencyParameters = dependencyClassNames.map { dependencyClassName ->
-            val dependencyName = dependencyClassName.simpleName.decapitalize()
-            ParameterSpec.builder(dependencyName, dependencyClassName).build()
-        }
-        val createFunSpec = if (factoryMethodElement != null) {
-            FunSpec.builder(factoryMethodElement.simpleName.toString())
-                .addParameters(dependencyParameters)
-                .addParameters(bindsParameters)
-                .addModifiers(KModifier.OVERRIDE)
-                .returns(componentClassName)
-                .addStatement(statement, *moduleClassNames.toTypedArray())
-                .build()
-        } else {
-            FunSpec.builder("create")
-                .addParameters(dependencyParameters)
-                .addParameters(bindsParameters)
-                .returns(componentClassName)
-                .addStatement(statement, *moduleClassNames.toTypedArray())
-                .build()
-        }
-
-        val companionSpecBuilder = TypeSpec.companionObjectBuilder().addFunction(createFunSpec)
-        if (factoryInterfaceElement != null) {
-            companionSpecBuilder.addSuperinterface(factoryInterfaceElement.toClassName(processingEnv))
-        }
-
-        this.addType(companionSpecBuilder.build())
-
-        return this
     }
 }

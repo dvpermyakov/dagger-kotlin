@@ -6,3 +6,10 @@ fun FunSpec.Builder.setParameterData(parameterData: ParameterData): FunSpec.Buil
     addParameter(parameterData.name, parameterData.typeName)
     return this
 }
+
+fun FunSpec.Builder.setParameterDataList(parameterDataList: List<ParameterData>): FunSpec.Builder {
+    parameterDataList.forEach { parameterData ->
+        setParameterData(parameterData)
+    }
+    return this
+}
