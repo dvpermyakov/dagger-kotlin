@@ -7,9 +7,9 @@ import com.dvpermyakov.dagger.spec.func.ComponentFunSpecFactory
 import com.dvpermyakov.dagger.spec.func.ConstructorSpecFactory
 import com.dvpermyakov.dagger.spec.property.ComponentProviderProperty
 import com.dvpermyakov.dagger.utils.ContainerProvider
-import com.dvpermyakov.dagger.utils.ParameterData
 import com.dvpermyakov.dagger.utils.element.*
 import com.dvpermyakov.dagger.utils.toClassName
+import com.dvpermyakov.dagger.utils.toParameterData
 import com.dvpermyakov.dagger.utils.toProviderParameterData
 import com.squareup.kotlinpoet.ClassName
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
@@ -28,8 +28,7 @@ class ComponentSpecFactory(
     private val graph = ComponentGraphTraversing(processingEnv)
 
     override fun create(): TypeSpec {
-        val typeSpecBuilder = TypeSpec.classBuilder(className)
-            .addAnnotation(Generated::class.java)
+        val typeSpecBuilder = TypeSpec.classBuilder(className).addAnnotation(Generated::class.java)
 
         val factoryInterfaceElement = componentElement
             .getNestedInterfaces()
@@ -59,12 +58,26 @@ class ComponentSpecFactory(
         val dependencyElements = componentElement.getAnnotationElements(processingEnv, Component::class.java, 1)
 
         val constructorParameters = (
-            moduleClassNamesExcludeInterfaces +
-                dependencyElements.toClassNames(processingEnv) +
-                bindsInstanceClassNames
+            bindsInstanceClassNames + moduleClassNamesExcludeInterfaces + dependencyElements.toClassNames(processingEnv)
             ).map { className ->
-                ParameterData(className, className.simpleName.decapitalize())
+                className.toParameterData()
             }
+
+        typeSpecBuilder
+            .primaryConstructor(ConstructorSpecFactory(constructorParameters).create())
+            .addType(
+                FactoryCompanionObjectSpec(
+                    processingEnv = processingEnv,
+                    className = className,
+                    componentClassName = componentClassName,
+                    factoryInterfaceElement = factoryInterfaceElement,
+                    factoryMethodElement = factoryCreateFunction,
+                    moduleClassNames = moduleClassNamesExcludeInterfaces,
+                    dependencyElements = dependencyElements,
+                    bindsInstanceClassNames = bindsInstanceClassNames
+                ).create()
+            )
+            .addSuperinterface(componentClassName)
 
         dependencyElements.forEach { dependencyElement ->
             val dependencyName = dependencyElement.simpleName.toString().decapitalize()
@@ -103,22 +116,6 @@ class ComponentSpecFactory(
                 ).create()
             )
         }
-
-        typeSpecBuilder
-            .primaryConstructor(ConstructorSpecFactory(constructorParameters).create())
-            .addType(
-                FactoryCompanionObjectSpec(
-                    processingEnv = processingEnv,
-                    className = className,
-                    componentClassName = componentClassName,
-                    factoryInterfaceElement = factoryInterfaceElement,
-                    factoryMethodElement = factoryCreateFunction,
-                    moduleClassNames = moduleClassNamesExcludeInterfaces,
-                    dependencyElements = dependencyElements,
-                    bindsInstanceClassNames = bindsInstanceClassNames
-                ).create()
-            )
-            .addSuperinterface(componentClassName)
 
         graph.initWithModules(moduleElements)
 
