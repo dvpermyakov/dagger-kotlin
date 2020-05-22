@@ -1,5 +1,6 @@
-package com.dvpermyakov.dagger.utils
+package com.dvpermyakov.dagger.utils.spec
 
+import com.dvpermyakov.dagger.utils.ParameterData
 import com.squareup.kotlinpoet.FunSpec
 
 fun FunSpec.Builder.setParameterData(parameterData: ParameterData): FunSpec.Builder {

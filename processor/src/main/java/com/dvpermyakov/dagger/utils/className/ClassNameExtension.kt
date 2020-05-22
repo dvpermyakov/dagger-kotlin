@@ -1,5 +1,7 @@
-package com.dvpermyakov.dagger.utils
+package com.dvpermyakov.dagger.utils.className
 
+import com.dvpermyakov.dagger.utils.Factory
+import com.dvpermyakov.dagger.utils.ParameterData
 import com.squareup.kotlinpoet.ClassName
 import com.squareup.kotlinpoet.ParameterizedTypeName
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy

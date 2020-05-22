@@ -5,11 +5,11 @@ import com.dvpermyakov.dagger.annotation.Module
 import com.dvpermyakov.dagger.annotation.Provide
 import com.dvpermyakov.dagger.spec.type.ModuleBindFunSpecFactory
 import com.dvpermyakov.dagger.spec.type.ModuleProvideFunSpecFactory
-import com.dvpermyakov.dagger.utils.*
 import com.dvpermyakov.dagger.utils.element.getMethodElements
 import com.dvpermyakov.dagger.utils.element.getQualifiedPackageName
 import com.dvpermyakov.dagger.utils.element.getReturnElement
 import com.dvpermyakov.dagger.utils.element.hasAnnotation
+import com.dvpermyakov.dagger.utils.spec.writeToDaggerKotlin
 import com.google.auto.service.AutoService
 import com.squareup.kotlinpoet.FileSpec
 import javax.annotation.processing.AbstractProcessor

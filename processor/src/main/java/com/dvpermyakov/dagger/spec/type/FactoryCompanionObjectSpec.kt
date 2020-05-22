@@ -1,8 +1,8 @@
 package com.dvpermyakov.dagger.spec.type
 
 import com.dvpermyakov.dagger.utils.element.toClassName
-import com.dvpermyakov.dagger.utils.setParameterDataList
-import com.dvpermyakov.dagger.utils.toParameterData
+import com.dvpermyakov.dagger.utils.spec.setParameterDataList
+import com.dvpermyakov.dagger.utils.className.toParameterData
 import com.squareup.kotlinpoet.ClassName
 import com.squareup.kotlinpoet.FunSpec
 import com.squareup.kotlinpoet.KModifier

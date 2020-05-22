@@ -2,7 +2,7 @@ package com.dvpermyakov.dagger.spec.property
 
 import com.dvpermyakov.dagger.utils.DoubleCheckProvider
 import com.dvpermyakov.dagger.utils.ParameterData
-import com.dvpermyakov.dagger.utils.toClassName
+import com.dvpermyakov.dagger.utils.className.toClassName
 import com.squareup.kotlinpoet.KModifier
 import com.squareup.kotlinpoet.PropertySpec
 import com.squareup.kotlinpoet.TypeName

@@ -3,9 +3,9 @@ package com.dvpermyakov.dagger.graph
 import com.dvpermyakov.dagger.spec.property.ComponentProviderProperty
 import com.dvpermyakov.dagger.utils.ContainerProvider
 import com.dvpermyakov.dagger.utils.element.*
-import com.dvpermyakov.dagger.utils.toClassName
-import com.dvpermyakov.dagger.utils.toProviderName
-import com.dvpermyakov.dagger.utils.toProviderParameterData
+import com.dvpermyakov.dagger.utils.className.toClassName
+import com.dvpermyakov.dagger.utils.className.toProviderName
+import com.dvpermyakov.dagger.utils.className.toProviderParameterData
 import com.squareup.kotlinpoet.ClassName
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
 import com.squareup.kotlinpoet.PropertySpec

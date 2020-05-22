@@ -5,8 +5,8 @@ import com.dvpermyakov.dagger.graph.ComponentGraphTraversing
 import com.dvpermyakov.dagger.spec.type.SubComponentSpecFactory
 import com.dvpermyakov.dagger.utils.ParameterData
 import com.dvpermyakov.dagger.utils.element.*
-import com.dvpermyakov.dagger.utils.setParameterData
-import com.dvpermyakov.dagger.utils.toProviderName
+import com.dvpermyakov.dagger.utils.spec.setParameterData
+import com.dvpermyakov.dagger.utils.className.toProviderName
 import com.squareup.kotlinpoet.*
 import javax.annotation.processing.ProcessingEnvironment
 import javax.inject.Inject

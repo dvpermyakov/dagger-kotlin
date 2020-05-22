@@ -7,7 +7,7 @@ import com.dvpermyakov.dagger.graph.ComponentGraphTraversing
 import com.dvpermyakov.dagger.spec.func.ComponentFunSpecFactory
 import com.dvpermyakov.dagger.spec.func.ConstructorSpecFactory
 import com.dvpermyakov.dagger.utils.element.*
-import com.dvpermyakov.dagger.utils.toParameterData
+import com.dvpermyakov.dagger.utils.className.toParameterData
 import com.squareup.kotlinpoet.ClassName
 import com.squareup.kotlinpoet.TypeSpec
 import javax.annotation.processing.Generated

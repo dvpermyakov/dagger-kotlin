@@ -6,6 +6,9 @@ import com.dvpermyakov.dagger.utils.*
 import com.dvpermyakov.dagger.utils.element.getParametersClassName
 import com.dvpermyakov.dagger.utils.element.getReturnElement
 import com.dvpermyakov.dagger.utils.element.toClassName
+import com.dvpermyakov.dagger.utils.spec.setProperties
+import com.dvpermyakov.dagger.utils.className.toFactoryClassName
+import com.dvpermyakov.dagger.utils.className.toProviderParameterData
 import com.squareup.kotlinpoet.*
 import javax.annotation.processing.Generated
 import javax.annotation.processing.ProcessingEnvironment
