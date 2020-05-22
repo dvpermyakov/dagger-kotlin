@@ -2,6 +2,7 @@ package com.dvpermyakov.dagger.spec.type
 
 import com.dvpermyakov.dagger.annotation.BindsInstance
 import com.dvpermyakov.dagger.annotation.Component
+import com.dvpermyakov.dagger.annotation.Subcomponent
 import com.dvpermyakov.dagger.graph.ComponentGraphTraversing
 import com.dvpermyakov.dagger.spec.func.ComponentFunSpecFactory
 import com.dvpermyakov.dagger.spec.func.ConstructorSpecFactory
@@ -76,7 +77,7 @@ class ComponentSpecFactory(
 
         graph.addElementsWithBindsInstance(bindsInstanceElements)
         graph.addDependencyElements(dependencyElements)
-        graph.initWithModules(moduleElements)
+        graph.setModules(moduleElements)
 
         moduleElements
             .excludeInterfaces()
@@ -96,6 +97,10 @@ class ComponentSpecFactory(
 
         componentElement
             .getMethodElements()
+            .sortedBy { methodElement ->
+                methodElement.getReturnElement(processingEnv)
+                    ?.hasAnnotation(processingEnv, Subcomponent::class.java)
+            }
             .map { methodElement ->
                 typeSpecBuilder.addFunction(
                     ComponentFunSpecFactory(

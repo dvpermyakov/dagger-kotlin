@@ -8,6 +8,7 @@ import com.dvpermyakov.dagger.sample.di.dependencies.DataDependencies
 import com.dvpermyakov.dagger.sample.di.modules.DatabaseModule
 import com.dvpermyakov.dagger.sample.di.modules.MainModule
 import com.dvpermyakov.dagger.sample.di.modules.RepositoryModule
+import com.dvpermyakov.dagger.sample.di.subcomponent.MainSubcomponent
 import com.dvpermyakov.dagger.sample.domain.GlobalConfig
 import com.dvpermyakov.dagger.sample.presentation.TransactionView
 import com.dvpermyakov.dagger.sample.presentation.TransactionViewModel
@@ -17,6 +18,8 @@ import com.dvpermyakov.dagger.sample.presentation.TransactionViewModel
     dependencies = [DataDependencies::class]
 )
 interface MainComponent {
+
+    fun getSubcomponent(): MainSubcomponent
 
     fun getTransactionViewModel(): TransactionViewModel
 

@@ -19,8 +19,13 @@ class ComponentGraphTraversing(private val processingEnv: ProcessingEnvironment)
 
     private val moduleMethodMap = mutableMapOf<Element, ExecutableElement>()
     private val nodesProperty = mutableMapOf<ClassName, PropertySpec>()
+    private val alreadyInjectedNodes = mutableSetOf<ClassName>()
 
-    fun initWithModules(moduleElements: List<Element>) {
+    fun addInjectedClassNames(classNames: List<ClassName>) {
+        alreadyInjectedNodes.addAll(classNames)
+    }
+
+    fun setModules(moduleElements: List<Element>) {
         moduleElements
             .forEach { moduleElement ->
                 moduleElement.getMethodElements().forEach { methodElement ->
@@ -72,7 +77,7 @@ class ComponentGraphTraversing(private val processingEnv: ProcessingEnvironment)
 
     fun addElementWithInjectedConstructor(element: Element) {
         val className = element.toClassName(processingEnv)
-        if (!nodesProperty.containsKey(className)) {
+        if (!alreadyInjectedNodes.contains(className) && !nodesProperty.containsKey(className)) {
             val constructorElement = element.getConstructor()
             if (constructorElement?.hasAnnotation(processingEnv, Inject::class.java) == true) {
                 val parameterElements = constructorElement.getParameterElements(processingEnv)
@@ -103,11 +108,11 @@ class ComponentGraphTraversing(private val processingEnv: ProcessingEnvironment)
         val returnTypeElement = requireNotNull(methodElement.getReturnElement(processingEnv))
         val returnClassName = returnTypeElement.toClassName(processingEnv)
 
-        if (!nodesProperty.containsKey(returnClassName)) {
+        if (!alreadyInjectedNodes.contains(returnClassName) && !nodesProperty.containsKey(returnClassName)) {
             val parameterElements = methodElement.getParameterElements(processingEnv)
             parameterElements.forEach { parameterElement ->
                 val parameterClassName = parameterElement.toClassName(processingEnv)
-                if (!nodesProperty.containsKey(parameterClassName)) {
+                if (!alreadyInjectedNodes.contains(parameterClassName) && !nodesProperty.containsKey(parameterClassName)) {
                     addElementInModule(
                         methodElement = requireNotNull(moduleMethodMap[parameterElement]),
                         moduleElement = moduleElement
@@ -160,6 +165,10 @@ class ComponentGraphTraversing(private val processingEnv: ProcessingEnvironment)
             ).create()
             nodesProperty[returnTypeClassName] = property
         }
+    }
+
+    fun getClassNames(): List<ClassName> {
+        return nodesProperty.keys.toList()
     }
 
     fun getProperties(): List<PropertySpec> {
