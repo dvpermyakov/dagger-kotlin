@@ -12,11 +12,8 @@ import org.junit.Assert
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
-import org.junit.runner.RunWith
-import org.junit.runners.JUnit4
 import javax.annotation.processing.ProcessingEnvironment
 
-@RunWith(JUnit4::class)
 class ComponentGraphTraversingTest {
 
     @get:Rule
