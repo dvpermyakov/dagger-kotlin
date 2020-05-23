@@ -1,4 +1,4 @@
-package com.dvpermyakov.dagger.sample
+package com.dvpermyakov.dagger.graph
 
 import com.dvpermyakov.dagger.annotation.Module
 
