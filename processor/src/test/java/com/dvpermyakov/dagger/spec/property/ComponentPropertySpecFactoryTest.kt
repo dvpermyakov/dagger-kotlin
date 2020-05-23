@@ -4,7 +4,7 @@ import com.dvpermyakov.dagger.sample.SampleData
 import com.dvpermyakov.dagger.sample.SampleProvider
 import com.dvpermyakov.dagger.utils.className.toClassName
 import com.dvpermyakov.dagger.utils.className.toProviderParameterData
-import org.junit.Assert
+import com.google.common.truth.Truth.assertThat
 import org.junit.Test
 
 class ComponentPropertySpecFactoryTest {
@@ -20,8 +20,8 @@ class ComponentPropertySpecFactoryTest {
             isSingleton = false
         ).create()
 
-        Assert.assertEquals(
-            providerSpec.toString(), """
+        assertThat(providerSpec.toString()).isEqualTo(
+            """
                 |private val sampleDataProvider: javax.inject.Provider<com.dvpermyakov.dagger.sample.SampleData> = com.dvpermyakov.dagger.sample.SampleProvider()
                 |""".trimMargin()
         )
@@ -39,8 +39,8 @@ class ComponentPropertySpecFactoryTest {
             isSingleton = true
         ).create()
 
-        Assert.assertEquals(
-            providerSpec.toString(), """
+        assertThat(providerSpec.toString()).isEqualTo(
+            """
                 |private val sampleDataProvider: javax.inject.Provider<com.dvpermyakov.dagger.sample.SampleData> = com.dvpermyakov.dagger.utils.DoubleCheckProvider(com.dvpermyakov.dagger.sample.SampleProvider())
                 |""".trimMargin()
         )
