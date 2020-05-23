@@ -1,5 +1,5 @@
 package com.dvpermyakov.dagger.sample
 
-interface SampleComponent {
+interface SampleComponentWithInjectedConstructor {
     fun getSampleData(): SampleDataWithInjectedConstructor
 }
