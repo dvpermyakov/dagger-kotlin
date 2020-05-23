@@ -17,4 +17,5 @@ jobs:
           paths:
             - ~/.gradle
           key: v1-dependencies-{{ checksum "build.gradle" }}
+      - run: ./gradlew processor:build
       - run: ./gradlew sample:build
