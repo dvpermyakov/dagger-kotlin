@@ -1,4 +1,4 @@
-package com.dvpermyakov.dagger.spec.property
+package com.dvpermyakov.dagger.sample
 
 import javax.inject.Provider
 

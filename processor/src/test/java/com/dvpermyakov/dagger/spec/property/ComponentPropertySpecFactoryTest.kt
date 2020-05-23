@@ -1,5 +1,7 @@
 package com.dvpermyakov.dagger.spec.property
 
+import com.dvpermyakov.dagger.sample.SampleData
+import com.dvpermyakov.dagger.sample.SampleProvider
 import com.dvpermyakov.dagger.utils.className.toClassName
 import com.dvpermyakov.dagger.utils.className.toProviderParameterData
 import org.junit.Assert
@@ -20,7 +22,7 @@ class ComponentPropertySpecFactoryTest {
 
         Assert.assertEquals(
             providerSpec.toString(), """
-                |private val sampleDataProvider: javax.inject.Provider<com.dvpermyakov.dagger.spec.property.SampleData> = com.dvpermyakov.dagger.spec.property.SampleProvider()
+                |private val sampleDataProvider: javax.inject.Provider<com.dvpermyakov.dagger.sample.SampleData> = com.dvpermyakov.dagger.sample.SampleProvider()
                 |""".trimMargin()
         )
     }
@@ -39,8 +41,8 @@ class ComponentPropertySpecFactoryTest {
 
         Assert.assertEquals(
             providerSpec.toString(), """
-                |private val sampleDataProvider: javax.inject.Provider<com.dvpermyakov.dagger.spec.property.SampleData> = com.dvpermyakov.dagger.utils.DoubleCheckProvider(com.dvpermyakov.dagger.spec.property.SampleProvider())
-                """.trimMargin()
+                |private val sampleDataProvider: javax.inject.Provider<com.dvpermyakov.dagger.sample.SampleData> = com.dvpermyakov.dagger.utils.DoubleCheckProvider(com.dvpermyakov.dagger.sample.SampleProvider())
+                |""".trimMargin()
         )
     }
 

@@ -1,5 +1,8 @@
 package com.dvpermyakov.dagger.graph
 
+import com.dvpermyakov.dagger.sample.EmptyModule
+import com.dvpermyakov.dagger.sample.SampleData
+import com.dvpermyakov.dagger.sample.SampleModule
 import com.dvpermyakov.dagger.utils.MockProcessingEnvironment
 import com.dvpermyakov.dagger.utils.className.toClassName
 import com.dvpermyakov.dagger.utils.element.getMethodElements
