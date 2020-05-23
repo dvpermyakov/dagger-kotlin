@@ -1,6 +1,6 @@
 package com.dvpermyakov.dagger.graph
 
-import com.dvpermyakov.dagger.spec.property.ComponentProviderPropertySpecFactory
+import com.dvpermyakov.dagger.spec.property.ComponentPropertySpecFactory
 import com.dvpermyakov.dagger.utils.ContainerProvider
 import com.dvpermyakov.dagger.utils.className.toClassName
 import com.dvpermyakov.dagger.utils.className.toProviderName
@@ -42,7 +42,7 @@ class ComponentGraphTraversing(private val processingEnv: ProcessingEnvironment)
             val parameterData = bindsInstanceClassName.toProviderParameterData()
             val statement = "%T(${bindsInstanceClassName.simpleName.decapitalize()})"
             val containerTypeName = ContainerProvider::class.java.toClassName().parameterizedBy(bindsInstanceClassName)
-            nodesProperty[bindsInstanceClassName] = ComponentProviderPropertySpecFactory(
+            nodesProperty[bindsInstanceClassName] = ComponentPropertySpecFactory(
                 parameterData,
                 statement,
                 containerTypeName,
@@ -64,7 +64,7 @@ class ComponentGraphTraversing(private val processingEnv: ProcessingEnvironment)
                         val statement = "%T($dependencyName.${methodElement.simpleName}())"
                         val containerTypeName =
                             ContainerProvider::class.java.toClassName().parameterizedBy(returnTypeClassName)
-                        nodesProperty[returnTypeClassName] = ComponentProviderPropertySpecFactory(
+                        nodesProperty[returnTypeClassName] = ComponentPropertySpecFactory(
                             parameterData,
                             statement,
                             containerTypeName,
@@ -93,7 +93,7 @@ class ComponentGraphTraversing(private val processingEnv: ProcessingEnvironment)
                 val statement = "%T(${parameterNames.joinToString(", ")})"
                 val isSingleton = element.hasAnnotation(processingEnv, Singleton::class.java)
 
-                nodesProperty[className] = ComponentProviderPropertySpecFactory(
+                nodesProperty[className] = ComponentPropertySpecFactory(
                     parameterData,
                     statement,
                     statementClassName,
@@ -131,7 +131,7 @@ class ComponentGraphTraversing(private val processingEnv: ProcessingEnvironment)
             val statement = "%T(${parameterNames.joinToString(", ")})"
             val isSingleton = methodElement.hasAnnotation(processingEnv, Singleton::class.java)
 
-            nodesProperty[returnClassName] = ComponentProviderPropertySpecFactory(
+            nodesProperty[returnClassName] = ComponentPropertySpecFactory(
                 parameterData,
                 statement,
                 statementClassName,
@@ -157,7 +157,7 @@ class ComponentGraphTraversing(private val processingEnv: ProcessingEnvironment)
             val statement = "%T(${parameterClassName.simpleName.decapitalize()}Provider)"
             val isSingleton = methodElement.hasAnnotation(processingEnv, Singleton::class.java)
 
-            val property = ComponentProviderPropertySpecFactory(
+            val property = ComponentPropertySpecFactory(
                 returnTypeClassName.toProviderParameterData(),
                 statement,
                 statementClassNames,

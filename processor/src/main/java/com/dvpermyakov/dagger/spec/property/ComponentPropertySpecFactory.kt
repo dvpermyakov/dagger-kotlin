@@ -7,7 +7,7 @@ import com.squareup.kotlinpoet.KModifier
 import com.squareup.kotlinpoet.PropertySpec
 import com.squareup.kotlinpoet.TypeName
 
-class ComponentProviderPropertySpecFactory(
+class ComponentPropertySpecFactory(
     private val parameterData: ParameterData,
     private val initializer: String,
     private val initializerTypeName: TypeName,
