@@ -39,14 +39,12 @@ class ComponentGraphTraversing(private val processingEnv: ProcessingEnvironment)
         elements.map { element ->
             element.toClassName(processingEnv)
         }.forEach { bindsInstanceClassName ->
-            val parameterData = bindsInstanceClassName.toProviderParameterData()
-            val statement = "%T(${bindsInstanceClassName.simpleName.decapitalize()})"
-            val containerTypeName = ContainerProvider::class.java.toClassName().parameterizedBy(bindsInstanceClassName)
             nodesProperty[bindsInstanceClassName] = ComponentPropertySpecFactory(
-                parameterData,
-                statement,
-                containerTypeName,
-                false
+                parameterData = bindsInstanceClassName.toProviderParameterData(),
+                initializer = "%T(${bindsInstanceClassName.simpleName.decapitalize()})",
+                initializerTypeName = ContainerProvider::class.java.toClassName()
+                    .parameterizedBy(bindsInstanceClassName),
+                isSingleton = false
             ).create()
         }
     }
@@ -60,15 +58,13 @@ class ComponentGraphTraversing(private val processingEnv: ProcessingEnvironment)
                     if (methodElement.parameters.isEmpty()) {
                         val returnTypeElement = requireNotNull(methodElement.getReturnElement(processingEnv))
                         val returnTypeClassName = returnTypeElement.toClassName(processingEnv)
-                        val parameterData = returnTypeClassName.toProviderParameterData()
-                        val statement = "%T($dependencyName.${methodElement.simpleName}())"
-                        val containerTypeName =
-                            ContainerProvider::class.java.toClassName().parameterizedBy(returnTypeClassName)
+
                         nodesProperty[returnTypeClassName] = ComponentPropertySpecFactory(
-                            parameterData,
-                            statement,
-                            containerTypeName,
-                            false
+                            parameterData = returnTypeClassName.toProviderParameterData(),
+                            initializer = "%T($dependencyName.${methodElement.simpleName}())",
+                            initializerTypeName = ContainerProvider::class.java.toClassName()
+                                .parameterizedBy(returnTypeClassName),
+                            isSingleton = false
                         ).create()
                     }
                 }
@@ -84,20 +80,15 @@ class ComponentGraphTraversing(private val processingEnv: ProcessingEnvironment)
                 parameterElements.forEach { parameterElement ->
                     addElementWithInjectedConstructor(parameterElement)
                 }
-
-                val parameterData = className.toProviderParameterData()
                 val parameterNames = parameterElements.map { parameterElement ->
                     parameterElement.toClassName(processingEnv).toProviderName()
                 }
-                val statementClassName = ClassName(className.packageName, "${className.simpleName}_Factory")
-                val statement = "%T(${parameterNames.joinToString(", ")})"
-                val isSingleton = element.hasAnnotation(processingEnv, Singleton::class.java)
 
                 nodesProperty[className] = ComponentPropertySpecFactory(
-                    parameterData,
-                    statement,
-                    statementClassName,
-                    isSingleton
+                    parameterData = className.toProviderParameterData(),
+                    initializer = "%T(${parameterNames.joinToString(", ")})",
+                    initializerTypeName = ClassName(className.packageName, "${className.simpleName}_Factory"),
+                    isSingleton = element.hasAnnotation(processingEnv, Singleton::class.java)
                 ).create()
             }
         }
@@ -120,22 +111,17 @@ class ComponentGraphTraversing(private val processingEnv: ProcessingEnvironment)
                 }
             }
 
-            val parameterData = returnClassName.toProviderParameterData()
             val parameterClassNames = parameterElements.toClassNames(processingEnv)
             val parameterNames =
                 listOf(moduleClassName.simpleName.decapitalize()) + parameterClassNames.map { it.simpleName.decapitalize() + "Provider" }
-            val statementClassName = ClassName(
-                moduleClassName.packageName,
-                "${moduleClassName.simpleName}_${returnTypeElement.simpleName}_Factory"
-            )
-            val statement = "%T(${parameterNames.joinToString(", ")})"
-            val isSingleton = methodElement.hasAnnotation(processingEnv, Singleton::class.java)
 
             nodesProperty[returnClassName] = ComponentPropertySpecFactory(
-                parameterData,
-                statement,
-                statementClassName,
-                isSingleton
+                parameterData = returnClassName.toProviderParameterData(),
+                initializer = "%T(${parameterNames.joinToString(", ")})",
+                initializerTypeName = ClassName(
+                    moduleClassName.packageName, "${moduleClassName.simpleName}_${returnTypeElement.simpleName}_Factory"
+                ),
+                isSingleton = methodElement.hasAnnotation(processingEnv, Singleton::class.java)
             ).create()
         }
     }
@@ -150,18 +136,14 @@ class ComponentGraphTraversing(private val processingEnv: ProcessingEnvironment)
             addElementWithInjectedConstructor(parameterElement)
 
             val moduleClassName = moduleElement.toClassName(processingEnv)
-            val statementClassNames = ClassName(
-                moduleClassName.packageName,
-                "${moduleClassName.simpleName}_${returnTypeElement.simpleName}_Binder"
-            )
-            val statement = "%T(${parameterClassName.simpleName.decapitalize()}Provider)"
-            val isSingleton = methodElement.hasAnnotation(processingEnv, Singleton::class.java)
 
             val property = ComponentPropertySpecFactory(
-                returnTypeClassName.toProviderParameterData(),
-                statement,
-                statementClassNames,
-                isSingleton
+                parameterData = returnTypeClassName.toProviderParameterData(),
+                initializer = "%T(${parameterClassName.simpleName.decapitalize()}Provider)",
+                initializerTypeName = ClassName(
+                    moduleClassName.packageName, "${moduleClassName.simpleName}_${returnTypeElement.simpleName}_Binder"
+                ),
+                isSingleton = methodElement.hasAnnotation(processingEnv, Singleton::class.java)
             ).create()
             nodesProperty[returnTypeClassName] = property
         }
