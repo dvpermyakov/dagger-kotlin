@@ -1,11 +1,11 @@
 package com.dvpermyakov.dagger.graph
 
-import com.dvpermyakov.dagger.spec.property.ComponentProviderProperty
+import com.dvpermyakov.dagger.spec.property.ComponentProviderPropertySpecFactory
 import com.dvpermyakov.dagger.utils.ContainerProvider
-import com.dvpermyakov.dagger.utils.element.*
 import com.dvpermyakov.dagger.utils.className.toClassName
 import com.dvpermyakov.dagger.utils.className.toProviderName
 import com.dvpermyakov.dagger.utils.className.toProviderParameterData
+import com.dvpermyakov.dagger.utils.element.*
 import com.squareup.kotlinpoet.ClassName
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
 import com.squareup.kotlinpoet.PropertySpec
@@ -42,7 +42,7 @@ class ComponentGraphTraversing(private val processingEnv: ProcessingEnvironment)
             val parameterData = bindsInstanceClassName.toProviderParameterData()
             val statement = "%T(${bindsInstanceClassName.simpleName.decapitalize()})"
             val containerTypeName = ContainerProvider::class.java.toClassName().parameterizedBy(bindsInstanceClassName)
-            nodesProperty[bindsInstanceClassName] = ComponentProviderProperty(
+            nodesProperty[bindsInstanceClassName] = ComponentProviderPropertySpecFactory(
                 parameterData,
                 statement,
                 containerTypeName,
@@ -64,7 +64,7 @@ class ComponentGraphTraversing(private val processingEnv: ProcessingEnvironment)
                         val statement = "%T($dependencyName.${methodElement.simpleName}())"
                         val containerTypeName =
                             ContainerProvider::class.java.toClassName().parameterizedBy(returnTypeClassName)
-                        nodesProperty[returnTypeClassName] = ComponentProviderProperty(
+                        nodesProperty[returnTypeClassName] = ComponentProviderPropertySpecFactory(
                             parameterData,
                             statement,
                             containerTypeName,
@@ -93,7 +93,7 @@ class ComponentGraphTraversing(private val processingEnv: ProcessingEnvironment)
                 val statement = "%T(${parameterNames.joinToString(", ")})"
                 val isSingleton = element.hasAnnotation(processingEnv, Singleton::class.java)
 
-                nodesProperty[className] = ComponentProviderProperty(
+                nodesProperty[className] = ComponentProviderPropertySpecFactory(
                     parameterData,
                     statement,
                     statementClassName,
@@ -131,7 +131,7 @@ class ComponentGraphTraversing(private val processingEnv: ProcessingEnvironment)
             val statement = "%T(${parameterNames.joinToString(", ")})"
             val isSingleton = methodElement.hasAnnotation(processingEnv, Singleton::class.java)
 
-            nodesProperty[returnClassName] = ComponentProviderProperty(
+            nodesProperty[returnClassName] = ComponentProviderPropertySpecFactory(
                 parameterData,
                 statement,
                 statementClassName,
@@ -157,7 +157,7 @@ class ComponentGraphTraversing(private val processingEnv: ProcessingEnvironment)
             val statement = "%T(${parameterClassName.simpleName.decapitalize()}Provider)"
             val isSingleton = methodElement.hasAnnotation(processingEnv, Singleton::class.java)
 
-            val property = ComponentProviderProperty(
+            val property = ComponentProviderPropertySpecFactory(
                 returnTypeClassName.toProviderParameterData(),
                 statement,
                 statementClassNames,
