@@ -40,10 +40,9 @@ class ComponentGraphTraversing(private val processingEnv: ProcessingEnvironment)
     }
 
     fun addDependencyElements(elements: List<Element>) {
-        elements.forEach { dependencyElement ->
-            val dependencyName = dependencyElement.simpleName.toString().decapitalize()
-            dependencyElement
-                .getMethodElements()
+        elements.forEach { element ->
+            val elementName = element.simpleName.toString().decapitalize()
+            element.getMethodElements()
                 .forEach { methodElement ->
                     if (methodElement.parameters.isEmpty()) {
                         val returnTypeElement = requireNotNull(methodElement.getReturnElement(processingEnv))
@@ -51,7 +50,7 @@ class ComponentGraphTraversing(private val processingEnv: ProcessingEnvironment)
 
                         nodesProperty[returnTypeClassName] = ComponentPropertySpecFactory(
                             parameterData = returnTypeClassName.toProviderParameterData(),
-                            initializer = "%T($dependencyName.${methodElement.simpleName}())",
+                            initializer = "%T($elementName.${methodElement.simpleName}())",
                             initializerTypeName = ContainerProvider::class.java.toClassName()
                                 .parameterizedBy(returnTypeClassName),
                             isSingleton = false
