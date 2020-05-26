@@ -1,10 +1,12 @@
 package com.dvpermyakov.dagger.spec.type
 
+import com.dvpermyakov.dagger.annotation.Subcomponent
 import com.dvpermyakov.dagger.graph.ComponentGraphTraversing
 import com.dvpermyakov.dagger.spec.func.ComponentFunSpecFactory
-import com.dvpermyakov.dagger.utils.element.getMethodElements
-import com.dvpermyakov.dagger.utils.element.toClassName
+import com.dvpermyakov.dagger.utils.element.*
 import com.squareup.kotlinpoet.ClassName
+import com.squareup.kotlinpoet.KModifier
+import com.squareup.kotlinpoet.PropertySpec
 import com.squareup.kotlinpoet.TypeSpec
 import javax.annotation.processing.ProcessingEnvironment
 import javax.lang.model.element.Element
@@ -21,7 +23,23 @@ class SubComponentSpecFactory(
         val typeSpecBuilder = TypeSpec.anonymousClassBuilder()
             .addSuperinterface(subcomponentElement.toClassName(processingEnv))
 
+        val moduleElements = subcomponentElement.getAnnotationElements(processingEnv, Subcomponent::class.java, 0)
+        moduleElements.forEach { moduleElement ->
+            val moduleClassName = moduleElement.toClassName(processingEnv)
+            typeSpecBuilder.addProperty(
+                PropertySpec
+                    .builder(
+                        name = moduleClassName.simpleName.decapitalize(),
+                        type = moduleClassName,
+                        modifiers = listOf(KModifier.PRIVATE)
+                    )
+                    .initializer("%T()", moduleClassName)
+                    .build()
+            )
+        }
+
         graph.addInjectedClassNames(componentInjectedClassNames)
+        graph.addModules(moduleElements)
 
         subcomponentElement
             .getMethodElements()
