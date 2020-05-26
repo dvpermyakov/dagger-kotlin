@@ -1,9 +1,6 @@
 package com.dvpermyakov.dagger.spec.type
 
-import com.dvpermyakov.dagger.sample.SampleComponent
-import com.dvpermyakov.dagger.sample.SampleComponentWithInjectedConstructor
-import com.dvpermyakov.dagger.sample.SampleComponentWithInjectedField
-import com.dvpermyakov.dagger.sample.SampleComponentWithSubcomponent
+import com.dvpermyakov.dagger.sample.*
 import com.dvpermyakov.dagger.utils.MockProcessingEnvironment
 import com.dvpermyakov.dagger.utils.className.toElement
 import com.google.testing.compile.CompilationRule
@@ -118,6 +115,56 @@ class ComponentSpecFactoryTest {
                 |
                 |  companion object {
                 |    fun create(): com.dvpermyakov.dagger.sample.SampleComponentWithSubcomponent = KDaggerSampleComponent()
+                |  }
+                |}
+                |""".trimMargin(),
+            typeSpec.toString()
+        )
+    }
+
+    @Test
+    fun sampleComponentWithModule() {
+        val sampleComponentElement = SampleComponentWithModule::class.java.toElement(processingEnv)
+        val typeSpec = ComponentSpecFactory(
+            processingEnv = processingEnv,
+            className = "KDaggerSampleComponent",
+            componentElement = sampleComponentElement
+        ).create()
+        Assert.assertEquals(
+            """
+                |@javax.annotation.processing.Generated
+                |class KDaggerSampleComponent(
+                |  sampleModule: com.dvpermyakov.dagger.sample.SampleModule
+                |) : com.dvpermyakov.dagger.sample.SampleComponentWithModule {
+                |  private val sampleDataProvider: javax.inject.Provider<com.dvpermyakov.dagger.sample.SampleData> = com.dvpermyakov.dagger.sample.SampleModule_SampleData_Factory(sampleModule)
+                |
+                |  companion object {
+                |    fun create(): com.dvpermyakov.dagger.sample.SampleComponentWithModule = KDaggerSampleComponent(com.dvpermyakov.dagger.sample.SampleModule())
+                |  }
+                |}
+                |""".trimMargin(),
+            typeSpec.toString()
+        )
+    }
+
+    @Test
+    fun sampleComponentWithDependency() {
+        val sampleComponentElement = SampleComponentWithDependency::class.java.toElement(processingEnv)
+        val typeSpec = ComponentSpecFactory(
+            processingEnv = processingEnv,
+            className = "KDaggerSampleComponent",
+            componentElement = sampleComponentElement
+        ).create()
+        Assert.assertEquals(
+            """
+                |@javax.annotation.processing.Generated
+                |class KDaggerSampleComponent(
+                |  sampleInterface: com.dvpermyakov.dagger.sample.SampleInterface
+                |) : com.dvpermyakov.dagger.sample.SampleComponentWithDependency {
+                |  private val sampleDataProvider: javax.inject.Provider<com.dvpermyakov.dagger.sample.SampleData> = com.dvpermyakov.dagger.utils.ContainerProvider<com.dvpermyakov.dagger.sample.SampleData>(sampleInterface.getData())
+                |
+                |  companion object {
+                |    fun create(): com.dvpermyakov.dagger.sample.SampleComponentWithDependency = KDaggerSampleComponent()
                 |  }
                 |}
                 |""".trimMargin(),
