@@ -86,7 +86,7 @@ class ComponentGraphTraversingTest {
     @Test
     fun injectedEmptyConstructor() {
         val injectedConstructorElement = SampleDataWithInjectedConstructor::class.java.toElement(processingEnv)
-        graph.addModules(listOf(injectedConstructorElement))
-        Assert.assertEquals(listOf(SampleData::class.java.toClassName()), graph.getClassNames())
+        graph.addElementWithInjectedConstructor(injectedConstructorElement)
+        Assert.assertEquals(listOf(SampleDataWithInjectedConstructor::class.java.toClassName()), graph.getClassNames())
     }
 }
