@@ -28,12 +28,12 @@ class ComponentGraphTraversing(private val processingEnv: ProcessingEnvironment)
     fun addElementsWithBindsInstance(elements: List<Element>) {
         elements.map { element ->
             element.toClassName(processingEnv)
-        }.forEach { bindsInstanceClassName ->
-            nodesProperty[bindsInstanceClassName] = ComponentPropertySpecFactory(
-                parameterData = bindsInstanceClassName.toProviderParameterData(),
-                initializer = "%T(${bindsInstanceClassName.simpleName.decapitalize()})",
+        }.forEach { className ->
+            nodesProperty[className] = ComponentPropertySpecFactory(
+                parameterData = className.toProviderParameterData(),
+                initializer = "%T(${className.simpleName.decapitalize()})",
                 initializerTypeName = ContainerProvider::class.java.toClassName()
-                    .parameterizedBy(bindsInstanceClassName),
+                    .parameterizedBy(className),
                 isSingleton = false
             ).create()
         }
