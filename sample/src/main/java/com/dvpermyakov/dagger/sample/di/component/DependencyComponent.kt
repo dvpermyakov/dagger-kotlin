@@ -24,7 +24,8 @@ interface DependencyComponent {
     @Component.Factory
     interface Factory {
         fun createNewInstance(
-            dependencies: ConfigDependencies
+            dependencies: ConfigDependencies,
+            mainModule: MainModule
         ): DependencyComponent
     }
 }

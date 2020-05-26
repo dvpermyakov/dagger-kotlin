@@ -63,6 +63,10 @@ internal fun Element.getConstructor(): ExecutableElement? {
     } as? ExecutableElement
 }
 
+internal fun Element.isConstructorEmpty(): Boolean {
+    return getConstructor()?.parameters?.isNullOrEmpty() == true
+}
+
 internal fun Element.findAnnotation(
     processingEnv: ProcessingEnvironment,
     annotationClass: Class<*>

@@ -7,7 +7,7 @@ import com.dvpermyakov.dagger.sample.domain.GlobalConfig
 import com.dvpermyakov.dagger.sample.domain.ProfileModel
 
 @Module(includes = [DatabaseModule::class])
-class MainModule {
+class MainModule(private val uselessValue: Int) {
 
     @Provide
     fun provideConfig(profile: ProfileModel): GlobalConfig {

@@ -34,7 +34,8 @@ interface MainComponent : ProfileDependencies, GlobalConfigDependencies {
         fun createNewInstance(
             @BindsInstance nConfig: NetworkConfig,
             dataDependencies: DataDependencies,
-            @BindsInstance dConfig: DatabaseConfig
+            @BindsInstance dConfig: DatabaseConfig,
+            mainModule: MainModule
         ): MainComponent
     }
 }
