@@ -43,7 +43,8 @@ class ComponentSpecFactoryTest {
                 |  companion object {
                 |    fun create(): com.dvpermyakov.dagger.sample.SampleComponent = KDaggerSampleComponent()
                 |  }
-                |}""".trimMargin(),
+                |}
+                |""".trimMargin(),
             typeSpec.toString()
         )
     }
