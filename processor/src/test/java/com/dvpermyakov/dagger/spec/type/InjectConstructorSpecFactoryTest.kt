@@ -3,6 +3,7 @@ package com.dvpermyakov.dagger.spec.type
 import com.dvpermyakov.dagger.sample.SampleDataWithInjectedConstructor
 import com.dvpermyakov.dagger.sample.SampleDataWithInjectedConstructorAndParameters
 import com.dvpermyakov.dagger.utils.MockProcessingEnvironment
+import com.dvpermyakov.dagger.utils.className.toElement
 import com.dvpermyakov.dagger.utils.element.getConstructor
 import com.google.testing.compile.CompilationRule
 import org.junit.Assert
@@ -17,11 +18,11 @@ class InjectConstructorSpecFactoryTest {
     @get:Rule
     val compilationRule = CompilationRule()
 
-    private lateinit var processingEnvironment: ProcessingEnvironment
+    private lateinit var processingEnv: ProcessingEnvironment
 
     @Before
     fun setup() {
-        processingEnvironment = MockProcessingEnvironment(
+        processingEnv = MockProcessingEnvironment(
             elements = compilationRule.elements,
             types = compilationRule.types
         )
@@ -29,11 +30,10 @@ class InjectConstructorSpecFactoryTest {
 
     @Test
     fun injectConstructor() {
-        val sampleDataElement =
-            processingEnvironment.elementUtils.getTypeElement(SampleDataWithInjectedConstructor::class.java.name)
+        val sampleDataElement = SampleDataWithInjectedConstructor::class.java.toElement(processingEnv)
         val constructorElement = sampleDataElement.getConstructor() as ExecutableElement
         val typeSpec = InjectConstructorSpecFactory(
-            processingEnv = processingEnvironment,
+            processingEnv = processingEnv,
             className = "SampleData_Factory",
             constructorElement = constructorElement
         ).create()
@@ -50,12 +50,10 @@ class InjectConstructorSpecFactoryTest {
 
     @Test
     fun injectedConstructorWithParameters() {
-        val sampleDataElement = processingEnvironment.elementUtils.getTypeElement(
-            SampleDataWithInjectedConstructorAndParameters::class.java.name
-        )
+        val sampleDataElement = SampleDataWithInjectedConstructorAndParameters::class.java.toElement(processingEnv)
         val constructorElement = sampleDataElement.getConstructor() as ExecutableElement
         val typeSpec = InjectConstructorSpecFactory(
-            processingEnv = processingEnvironment,
+            processingEnv = processingEnv,
             className = "SampleData_Factory",
             constructorElement = constructorElement
         ).create()

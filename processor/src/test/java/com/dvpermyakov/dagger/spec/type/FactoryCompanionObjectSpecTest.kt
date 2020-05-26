@@ -3,6 +3,7 @@ package com.dvpermyakov.dagger.spec.type
 import com.dvpermyakov.dagger.sample.*
 import com.dvpermyakov.dagger.utils.MockProcessingEnvironment
 import com.dvpermyakov.dagger.utils.className.toClassName
+import com.dvpermyakov.dagger.utils.className.toElement
 import com.dvpermyakov.dagger.utils.element.getMethodElements
 import com.dvpermyakov.dagger.utils.element.toClassName
 import com.google.testing.compile.CompilationRule
@@ -17,11 +18,11 @@ class FactoryCompanionObjectSpecTest {
     @get:Rule
     val compilationRule = CompilationRule()
 
-    private lateinit var processingEnvironment: ProcessingEnvironment
+    private lateinit var processingEnv: ProcessingEnvironment
 
     @Before
     fun setup() {
-        processingEnvironment = MockProcessingEnvironment(
+        processingEnv = MockProcessingEnvironment(
             elements = compilationRule.elements,
             types = compilationRule.types
         )
@@ -29,10 +30,10 @@ class FactoryCompanionObjectSpecTest {
 
     @Test
     fun factoryCompanion() {
-        val componentElement = processingEnvironment.elementUtils.getTypeElement(SampleComponent::class.java.name)
+        val componentElement = SampleComponent::class.java.toElement(processingEnv)
         val typeSpec = FactoryCompanionObjectSpec(
-            processingEnv = processingEnvironment,
-            componentClassName = componentElement.toClassName(processingEnvironment),
+            processingEnv = processingEnv,
+            componentClassName = componentElement.toClassName(processingEnv),
             factoryMethodElement = null,
             factoryInterfaceElement = null,
             className = "KDaggerComponent",
@@ -51,10 +52,10 @@ class FactoryCompanionObjectSpecTest {
 
     @Test
     fun factoryCompanionWithModules() {
-        val componentElement = processingEnvironment.elementUtils.getTypeElement(SampleComponent::class.java.name)
+        val componentElement = SampleComponent::class.java.toElement(processingEnv)
         val typeSpec = FactoryCompanionObjectSpec(
-            processingEnv = processingEnvironment,
-            componentClassName = componentElement.toClassName(processingEnvironment),
+            processingEnv = processingEnv,
+            componentClassName = componentElement.toClassName(processingEnv),
             factoryMethodElement = null,
             factoryInterfaceElement = null,
             className = "KDaggerComponent",
@@ -73,10 +74,10 @@ class FactoryCompanionObjectSpecTest {
 
     @Test
     fun factoryCompanionWithOtherClassNames() {
-        val componentElement = processingEnvironment.elementUtils.getTypeElement(SampleComponent::class.java.name)
+        val componentElement = SampleComponent::class.java.toElement(processingEnv)
         val typeSpec = FactoryCompanionObjectSpec(
-            processingEnv = processingEnvironment,
-            componentClassName = componentElement.toClassName(processingEnvironment),
+            processingEnv = processingEnv,
+            componentClassName = componentElement.toClassName(processingEnv),
             factoryMethodElement = null,
             factoryInterfaceElement = null,
             className = "KDaggerComponent",
@@ -95,10 +96,10 @@ class FactoryCompanionObjectSpecTest {
 
     @Test
     fun factoryCompanionWithModulesAndOtherClassNames() {
-        val componentElement = processingEnvironment.elementUtils.getTypeElement(SampleComponent::class.java.name)
+        val componentElement = SampleComponent::class.java.toElement(processingEnv)
         val typeSpec = FactoryCompanionObjectSpec(
-            processingEnv = processingEnvironment,
-            componentClassName = componentElement.toClassName(processingEnvironment),
+            processingEnv = processingEnv,
+            componentClassName = componentElement.toClassName(processingEnv),
             factoryMethodElement = null,
             factoryInterfaceElement = null,
             className = "KDaggerComponent",
@@ -117,12 +118,12 @@ class FactoryCompanionObjectSpecTest {
 
     @Test
     fun factoryWithMethodAndInterface() {
-        val componentElement = processingEnvironment.elementUtils.getTypeElement(SampleComponent::class.java.name)
-        val factoryInterfaceElement = processingEnvironment.elementUtils.getTypeElement(SampleComponentFactory::class.java.name)
+        val componentElement = SampleComponent::class.java.toElement(processingEnv)
+        val factoryInterfaceElement = SampleComponentFactory::class.java.toElement(processingEnv)
         val factoryMethodElement = factoryInterfaceElement.getMethodElements().first()
         val typeSpec = FactoryCompanionObjectSpec(
-            processingEnv = processingEnvironment,
-            componentClassName = componentElement.toClassName(processingEnvironment),
+            processingEnv = processingEnv,
+            componentClassName = componentElement.toClassName(processingEnv),
             factoryMethodElement = factoryMethodElement,
             factoryInterfaceElement = factoryInterfaceElement,
             className = "KDaggerComponent",

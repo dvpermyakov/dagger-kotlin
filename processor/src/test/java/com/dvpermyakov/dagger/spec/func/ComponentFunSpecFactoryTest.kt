@@ -5,6 +5,7 @@ import com.dvpermyakov.dagger.sample.SampleComponentWithInjectedConstructor
 import com.dvpermyakov.dagger.sample.SampleComponentWithInjectedField
 import com.dvpermyakov.dagger.sample.SampleComponentWithSubcomponent
 import com.dvpermyakov.dagger.utils.MockProcessingEnvironment
+import com.dvpermyakov.dagger.utils.className.toElement
 import com.dvpermyakov.dagger.utils.element.*
 import com.google.testing.compile.CompilationRule
 import io.mockk.every
@@ -21,7 +22,7 @@ class ComponentFunSpecFactoryTest {
     @get:Rule
     val compilationRule = CompilationRule()
 
-    private lateinit var processingEnvironment: ProcessingEnvironment
+    private lateinit var processingEnv: ProcessingEnvironment
 
     private val graph = mockk<ComponentGraphTraversing> {
         every { addInjectedClassNames(any()) } returns Unit
@@ -32,7 +33,7 @@ class ComponentFunSpecFactoryTest {
 
     @Before
     fun setup() {
-        processingEnvironment = MockProcessingEnvironment(
+        processingEnv = MockProcessingEnvironment(
             elements = compilationRule.elements,
             types = compilationRule.types
         )
@@ -40,16 +41,15 @@ class ComponentFunSpecFactoryTest {
 
     @Test
     fun componentFunWithInjectedConstructor() {
-        val componentElement =
-            processingEnvironment.elementUtils.getTypeElement(SampleComponentWithInjectedConstructor::class.java.name)
+        val componentElement = SampleComponentWithInjectedConstructor::class.java.toElement(processingEnv)
         val methodElement = componentElement.getMethodElements().first()
         val funSpec = ComponentFunSpecFactory(
-            processingEnv = processingEnvironment,
+            processingEnv = processingEnv,
             graph = graph,
             methodElement = methodElement
         ).create()
 
-        val returnTypeElement = requireNotNull(methodElement.getReturnElement(processingEnvironment))
+        val returnTypeElement = requireNotNull(methodElement.getReturnElement(processingEnv))
         verify { graph.addElementWithInjectedConstructor(returnTypeElement) }
 
         Assert.assertEquals(
@@ -62,17 +62,16 @@ class ComponentFunSpecFactoryTest {
 
     @Test
     fun componentFunWithInjectedField() {
-        val componentElement =
-            processingEnvironment.elementUtils.getTypeElement(SampleComponentWithInjectedField::class.java.name)
+        val componentElement = SampleComponentWithInjectedField::class.java.toElement(processingEnv)
         val methodElement = componentElement.getMethodElements().first()
         val funSpec = ComponentFunSpecFactory(
-            processingEnv = processingEnvironment,
+            processingEnv = processingEnv,
             graph = graph,
             methodElement = methodElement
         ).create()
 
-        val parameterElement = methodElement.getParameterElements(processingEnvironment).first()
-        val fieldTypeElement = parameterElement.getFieldElements().first().asType().toElement(processingEnvironment)
+        val parameterElement = methodElement.getParameterElements(processingEnv).first()
+        val fieldTypeElement = parameterElement.getFieldElements().first().asType().toElement(processingEnv)
         verify { graph.addElementWithInjectedConstructor(fieldTypeElement) }
 
         Assert.assertEquals(
@@ -87,11 +86,10 @@ class ComponentFunSpecFactoryTest {
 
     @Test
     fun componentFunWithSubcomponent() {
-        val componentElement =
-            processingEnvironment.elementUtils.getTypeElement(SampleComponentWithSubcomponent::class.java.name)
+        val componentElement = SampleComponentWithSubcomponent::class.java.toElement(processingEnv)
         val methodElement = componentElement.getMethodElements().first()
         val funSpec = ComponentFunSpecFactory(
-            processingEnv = processingEnvironment,
+            processingEnv = processingEnv,
             graph = graph,
             methodElement = methodElement
         ).create()

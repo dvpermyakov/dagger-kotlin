@@ -3,6 +3,7 @@ package com.dvpermyakov.dagger.spec.type
 import com.dvpermyakov.dagger.sample.SampleModule
 import com.dvpermyakov.dagger.sample.SampleWithWrapperModule
 import com.dvpermyakov.dagger.utils.MockProcessingEnvironment
+import com.dvpermyakov.dagger.utils.className.toElement
 import com.dvpermyakov.dagger.utils.element.getMethodElements
 import com.google.testing.compile.CompilationRule
 import org.junit.Assert
@@ -16,11 +17,11 @@ class ModuleProviderFunSpecFactoryTest {
     @get:Rule
     val compilationRule = CompilationRule()
 
-    private lateinit var processingEnvironment: ProcessingEnvironment
+    private lateinit var processingEnv: ProcessingEnvironment
 
     @Before
     fun setup() {
-        processingEnvironment = MockProcessingEnvironment(
+        processingEnv = MockProcessingEnvironment(
             elements = compilationRule.elements,
             types = compilationRule.types
         )
@@ -28,10 +29,10 @@ class ModuleProviderFunSpecFactoryTest {
 
     @Test
     fun sampleModule() {
-        val moduleElement = processingEnvironment.elementUtils.getTypeElement(SampleModule::class.java.name)
+        val moduleElement = SampleModule::class.java.toElement(processingEnv)
         val methodElement = moduleElement.getMethodElements().first()
         val typeSpec = ModuleProvideFunSpecFactory(
-            processingEnv = processingEnvironment,
+            processingEnv = processingEnv,
             className = "SampleModule_SampleData_Factory",
             methodElement = methodElement,
             moduleElement = moduleElement
@@ -52,10 +53,10 @@ class ModuleProviderFunSpecFactoryTest {
 
     @Test
     fun sampleWithWrapperModule() {
-        val moduleElement = processingEnvironment.elementUtils.getTypeElement(SampleWithWrapperModule::class.java.name)
+        val moduleElement = SampleWithWrapperModule::class.java.toElement(processingEnv)
         val methodElement = moduleElement.getMethodElements().first()
         val typeSpec = ModuleProvideFunSpecFactory(
-            processingEnv = processingEnvironment,
+            processingEnv = processingEnv,
             className = "SampleModule_SampleData_Factory",
             methodElement = methodElement,
             moduleElement = moduleElement
