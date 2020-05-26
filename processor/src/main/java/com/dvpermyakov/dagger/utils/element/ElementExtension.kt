@@ -1,6 +1,5 @@
 package com.dvpermyakov.dagger.utils.element
 
-import com.dvpermyakov.dagger.utils.className.toElement
 import com.squareup.kotlinpoet.ClassName
 import javax.annotation.processing.ProcessingEnvironment
 import javax.lang.model.element.*
@@ -50,8 +49,8 @@ internal fun Element.getSuperInterfaces(
     processingEnv: ProcessingEnvironment
 ): List<Element> {
     return processingEnv.typeUtils.directSupertypes(this.asType())
-        .filter { typeMirror ->
-            typeMirror != Object::class.java.toElement(processingEnv).asType()
+        .filterIndexed { index, _ ->
+            index > 0
         }
         .map { type ->
             type.toElement(processingEnv)
