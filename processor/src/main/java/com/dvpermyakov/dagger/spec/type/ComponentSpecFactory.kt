@@ -63,7 +63,7 @@ class ComponentSpecFactory(
         typeSpecBuilder
             .primaryConstructor(ConstructorSpecFactory(constructorParameters).create())
             .addType(
-                FactoryCompanionObjectSpec(
+                FactoryCompanionObjectSpecFactory(
                     processingEnv = processingEnv,
                     className = className,
                     componentClassName = componentClassName,

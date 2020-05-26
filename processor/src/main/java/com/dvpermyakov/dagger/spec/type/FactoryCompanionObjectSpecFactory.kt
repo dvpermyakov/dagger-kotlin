@@ -10,7 +10,7 @@ import com.squareup.kotlinpoet.TypeSpec
 import javax.annotation.processing.ProcessingEnvironment
 import javax.lang.model.element.Element
 
-class FactoryCompanionObjectSpec(
+class FactoryCompanionObjectSpecFactory(
     private val processingEnv: ProcessingEnvironment,
     private val componentClassName: ClassName,
     private val className: String,
@@ -25,7 +25,10 @@ class FactoryCompanionObjectSpec(
             val name = otherClassName.simpleName.decapitalize()
             "$name = $name"
         }
-        val modulesStatement = List(moduleClassNames.size) { "%T()" }
+        val modulesStatement = List(moduleClassNames.size) { index ->
+            val name = moduleClassNames[index].simpleName.decapitalize()
+            "$name = %T()"
+        }
         val statementCode = (modulesStatement + otherStatement).joinToString(", ")
         val statement = "return $className(%s)".format(statementCode)
 

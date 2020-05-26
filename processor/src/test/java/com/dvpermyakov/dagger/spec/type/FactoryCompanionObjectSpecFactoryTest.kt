@@ -13,7 +13,7 @@ import org.junit.Rule
 import org.junit.Test
 import javax.annotation.processing.ProcessingEnvironment
 
-class FactoryCompanionObjectSpecTest {
+class FactoryCompanionObjectSpecFactoryTest {
 
     @get:Rule
     val compilationRule = CompilationRule()
@@ -31,7 +31,7 @@ class FactoryCompanionObjectSpecTest {
     @Test
     fun factoryCompanion() {
         val componentElement = SampleComponent::class.java.toElement(processingEnv)
-        val typeSpec = FactoryCompanionObjectSpec(
+        val typeSpec = FactoryCompanionObjectSpecFactory(
             processingEnv = processingEnv,
             componentClassName = componentElement.toClassName(processingEnv),
             factoryMethodElement = null,
@@ -53,7 +53,7 @@ class FactoryCompanionObjectSpecTest {
     @Test
     fun factoryCompanionWithModules() {
         val componentElement = SampleComponent::class.java.toElement(processingEnv)
-        val typeSpec = FactoryCompanionObjectSpec(
+        val typeSpec = FactoryCompanionObjectSpecFactory(
             processingEnv = processingEnv,
             componentClassName = componentElement.toClassName(processingEnv),
             factoryMethodElement = null,
@@ -75,7 +75,7 @@ class FactoryCompanionObjectSpecTest {
     @Test
     fun factoryCompanionWithOtherClassNames() {
         val componentElement = SampleComponent::class.java.toElement(processingEnv)
-        val typeSpec = FactoryCompanionObjectSpec(
+        val typeSpec = FactoryCompanionObjectSpecFactory(
             processingEnv = processingEnv,
             componentClassName = componentElement.toClassName(processingEnv),
             factoryMethodElement = null,
@@ -97,7 +97,7 @@ class FactoryCompanionObjectSpecTest {
     @Test
     fun factoryCompanionWithModulesAndOtherClassNames() {
         val componentElement = SampleComponent::class.java.toElement(processingEnv)
-        val typeSpec = FactoryCompanionObjectSpec(
+        val typeSpec = FactoryCompanionObjectSpecFactory(
             processingEnv = processingEnv,
             componentClassName = componentElement.toClassName(processingEnv),
             factoryMethodElement = null,
@@ -121,7 +121,7 @@ class FactoryCompanionObjectSpecTest {
         val componentElement = SampleComponent::class.java.toElement(processingEnv)
         val factoryInterfaceElement = SampleComponentFactory::class.java.toElement(processingEnv)
         val factoryMethodElement = factoryInterfaceElement.getMethodElements().first()
-        val typeSpec = FactoryCompanionObjectSpec(
+        val typeSpec = FactoryCompanionObjectSpecFactory(
             processingEnv = processingEnv,
             componentClassName = componentElement.toClassName(processingEnv),
             factoryMethodElement = factoryMethodElement,
