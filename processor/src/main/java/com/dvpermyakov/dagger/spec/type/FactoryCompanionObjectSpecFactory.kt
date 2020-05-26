@@ -14,22 +14,23 @@ class FactoryCompanionObjectSpecFactory(
     private val processingEnv: ProcessingEnvironment,
     private val componentClassName: ClassName,
     private val className: String,
+    private val emptyConstructorClassNames: List<ClassName>,
+    private val otherClassNames: List<ClassName>,
     private val factoryInterfaceElement: Element?,
-    private val factoryMethodElement: Element?,
-    private val moduleClassNames: List<ClassName>,
-    private val otherClassNames: List<ClassName>
+    private val factoryMethodElement: Element?
 ) : TypeSpecFactory {
 
     override fun create(): TypeSpec {
+        val emptyConstructorStatement = List(emptyConstructorClassNames.size) { index ->
+            val name = emptyConstructorClassNames[index].simpleName.decapitalize()
+            "$name = %T()"
+        }
         val otherStatement = otherClassNames.map { otherClassName ->
             val name = otherClassName.simpleName.decapitalize()
             "$name = $name"
         }
-        val modulesStatement = List(moduleClassNames.size) { index ->
-            val name = moduleClassNames[index].simpleName.decapitalize()
-            "$name = %T()"
-        }
-        val statementCode = (modulesStatement + otherStatement).joinToString(", ")
+
+        val statementCode = (emptyConstructorStatement + otherStatement).joinToString(", ")
         val statement = "return $className(%s)".format(statementCode)
 
         val otherParameters = otherClassNames.map { otherClassName ->
@@ -40,13 +41,13 @@ class FactoryCompanionObjectSpecFactory(
                 .setParameterDataList(otherParameters)
                 .addModifiers(KModifier.OVERRIDE)
                 .returns(componentClassName)
-                .addStatement(statement, *moduleClassNames.toTypedArray())
+                .addStatement(statement, *emptyConstructorClassNames.toTypedArray())
                 .build()
         } else {
             FunSpec.builder("create")
                 .setParameterDataList(otherParameters)
                 .returns(componentClassName)
-                .addStatement(statement, *moduleClassNames.toTypedArray())
+                .addStatement(statement, *emptyConstructorClassNames.toTypedArray())
                 .build()
         }
 

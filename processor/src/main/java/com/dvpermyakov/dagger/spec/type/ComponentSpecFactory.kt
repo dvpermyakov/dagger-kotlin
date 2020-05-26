@@ -46,14 +46,22 @@ class ComponentSpecFactory(
                 variableElement.asType().toElement(processingEnv)
             } ?: emptyList()
 
-        val moduleElements = componentElement.getAnnotationElements(processingEnv, Component::class.java, 0)
-        val moduleClassNamesExcludeInterfaces = moduleElements
+        val moduleElements = componentElement
+            .getAnnotationElements(processingEnv, Component::class.java, 0)
+        val moduleClassNamesWithEmptyConstructors = moduleElements
             .excludeInterfaces()
+            .filter { element -> element.isConstructorEmpty() }
             .toClassNames(processingEnv)
-        val dependencyElements = componentElement.getAnnotationElements(processingEnv, Component::class.java, 1)
+        val moduleClassNamesWithParameters = moduleElements
+            .excludeInterfaces()
+            .filterNot { element -> element.isConstructorEmpty() }
+            .toClassNames(processingEnv)
+        val dependencyElements = componentElement
+            .getAnnotationElements(processingEnv, Component::class.java, 1)
 
         val constructorParameters = (
-            moduleClassNamesExcludeInterfaces +
+            moduleClassNamesWithEmptyConstructors +
+                moduleClassNamesWithParameters +
                 dependencyElements.toClassNames(processingEnv) +
                 bindsInstanceElements.toClassNames(processingEnv)
             ).map { className ->
@@ -69,8 +77,8 @@ class ComponentSpecFactory(
                     componentClassName = componentClassName,
                     factoryInterfaceElement = factoryInterfaceElement,
                     factoryMethodElement = factoryCreateFunction,
-                    moduleClassNames = moduleClassNamesExcludeInterfaces,
-                    otherClassNames = factoryCreateFunction?.getParametersClassName(processingEnv) ?: emptyList()
+                    emptyConstructorClassNames = moduleClassNamesWithEmptyConstructors,
+                    otherClassNames = ((factoryCreateFunction?.getParametersClassName(processingEnv) ?: emptyList()) + moduleClassNamesWithParameters).distinct()
                 ).create()
             )
             .addSuperinterface(componentClassName)
