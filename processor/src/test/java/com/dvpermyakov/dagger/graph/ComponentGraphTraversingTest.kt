@@ -89,4 +89,20 @@ class ComponentGraphTraversingTest {
         graph.addElementWithInjectedConstructor(injectedConstructorElement)
         Assert.assertEquals(listOf(SampleDataWithInjectedConstructor::class.java.toClassName()), graph.getClassNames())
     }
+
+    @Test
+    fun moduleWithManyMethods() {
+        val moduleElement = SampleModuleWithManyMethods::class.java.toElement(processingEnv)
+        graph.addModules(listOf(moduleElement))
+        Assert.assertEquals(
+            listOf(
+                SampleInterface::class.java.toClassName(),
+                SampleData::class.java.toClassName(),
+                SampleDataWrapper::class.java.toClassName(),
+                SampleDataOther::class.java.toClassName()
+            ),
+            graph.getClassNames()
+        )
+
+    }
 }
