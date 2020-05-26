@@ -77,7 +77,7 @@ class ComponentSpecFactory(
 
         graph.addElementsWithBindsInstance(bindsInstanceElements)
         graph.addDependencyElements(dependencyElements)
-        graph.setModules(moduleElements)
+        graph.addModules(moduleElements)
 
         componentElement
             .getMethodElements()

@@ -60,7 +60,7 @@ class ComponentGraphTraversing(private val processingEnv: ProcessingEnvironment)
         }
     }
 
-    fun setModules(moduleElements: List<Element>) {
+    fun addModules(moduleElements: List<Element>) {
         moduleElements
             .forEach { moduleElement ->
                 moduleElement.getMethodElements().forEach { methodElement ->

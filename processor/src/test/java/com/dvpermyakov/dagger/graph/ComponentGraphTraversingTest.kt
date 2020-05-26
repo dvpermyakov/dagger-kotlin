@@ -34,21 +34,21 @@ class ComponentGraphTraversingTest {
     @Test
     fun emptyModule() {
         val moduleElement = EmptyModule::class.java.toElement(processingEnv)
-        graph.setModules(listOf(moduleElement))
+        graph.addModules(listOf(moduleElement))
         Assert.assertEquals(emptyList<ClassName>(), graph.getClassNames())
     }
 
     @Test
     fun sampleModule() {
         val moduleElement = SampleModule::class.java.toElement(processingEnv)
-        graph.setModules(listOf(moduleElement))
+        graph.addModules(listOf(moduleElement))
         Assert.assertEquals(listOf(SampleData::class.java.toClassName()), graph.getClassNames())
     }
 
     @Test
     fun sampleModuleWithBinds() {
         val moduleElement = SampleModuleWithBinds::class.java.toElement(processingEnv)
-        graph.setModules(listOf(moduleElement))
+        graph.addModules(listOf(moduleElement))
         Assert.assertEquals(listOf(SampleInterface::class.java.toClassName()), graph.getClassNames())
     }
 
@@ -56,7 +56,7 @@ class ComponentGraphTraversingTest {
     fun sampleModuleWithWrapperModule() {
         val moduleElement = SampleWithWrapperModule::class.java.toElement(processingEnv)
         graph.addInjectedClassNames(listOf(SampleData::class.java.toClassName()))
-        graph.setModules(listOf(moduleElement))
+        graph.addModules(listOf(moduleElement))
         Assert.assertEquals(listOf(SampleDataWrapper::class.java.toClassName()), graph.getClassNames())
     }
 
@@ -74,5 +74,19 @@ class ComponentGraphTraversingTest {
                 SampleDataOther::class.java.toClassName()
             ), graph.getClassNames()
         )
+    }
+
+    @Test
+    fun addDependencies() {
+        val sampleDependency = SampleInterface::class.java.toElement(processingEnv)
+        graph.addDependencyElements(listOf(sampleDependency))
+        Assert.assertEquals(listOf(SampleData::class.java.toClassName()), graph.getClassNames())
+    }
+
+    @Test
+    fun injectedEmptyConstructor() {
+        val injectedConstructorElement = SampleDataWithInjectedConstructor::class.java.toElement(processingEnv)
+        graph.addModules(listOf(injectedConstructorElement))
+        Assert.assertEquals(listOf(SampleData::class.java.toClassName()), graph.getClassNames())
     }
 }

@@ -39,7 +39,7 @@ class SubComponentSpecFactory(
         }
 
         graph.addInjectedClassNames(componentInjectedClassNames)
-        graph.setModules(moduleElements)
+        graph.addModules(moduleElements)
 
         subcomponentElement
             .getMethodElements()
