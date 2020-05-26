@@ -45,6 +45,18 @@ internal fun Element.getNestedInterfaces(): List<Element> {
         }
 }
 
+internal fun Element.getSuperInterfaces(
+    processingEnv: ProcessingEnvironment
+): List<Element> {
+    return processingEnv.typeUtils.directSupertypes(this.asType())
+        .filterIndexed { index, _ ->
+            index > 0
+        }
+        .map { type ->
+            type.toElement(processingEnv)
+        }
+}
+
 internal fun Element.getConstructor(): ExecutableElement? {
     return enclosedElements.firstOrNull { enclosedElement ->
         enclosedElement.kind == ElementKind.CONSTRUCTOR

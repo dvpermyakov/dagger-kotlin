@@ -6,8 +6,8 @@ import com.dvpermyakov.dagger.annotation.Subcomponent
 import com.dvpermyakov.dagger.graph.ComponentGraphTraversing
 import com.dvpermyakov.dagger.spec.func.ComponentFunSpecFactory
 import com.dvpermyakov.dagger.spec.func.ConstructorSpecFactory
-import com.dvpermyakov.dagger.utils.element.*
 import com.dvpermyakov.dagger.utils.className.toParameterData
+import com.dvpermyakov.dagger.utils.element.*
 import com.squareup.kotlinpoet.ClassName
 import com.squareup.kotlinpoet.TypeSpec
 import javax.annotation.processing.Generated
@@ -79,21 +79,27 @@ class ComponentSpecFactory(
         graph.addDependencyElements(dependencyElements)
         graph.addModules(moduleElements)
 
-        componentElement
+        val componentMethodElements = componentElement
             .getMethodElements()
             .sortedBy { methodElement ->
                 methodElement.getReturnElement(processingEnv)
                     ?.hasAnnotation(processingEnv, Subcomponent::class.java)
             }
-            .map { methodElement ->
-                typeSpecBuilder.addFunction(
-                    ComponentFunSpecFactory(
-                        processingEnv = processingEnv,
-                        graph = graph,
-                        methodElement = methodElement
-                    ).create()
-                )
+        val superInterfacesMethodElements = componentElement
+            .getSuperInterfaces(processingEnv)
+            .flatMap { superInterfaceElement ->
+                superInterfaceElement.getMethodElements()
             }
+
+        (componentMethodElements + superInterfacesMethodElements).forEach { methodElement ->
+            typeSpecBuilder.addFunction(
+                ComponentFunSpecFactory(
+                    processingEnv = processingEnv,
+                    graph = graph,
+                    methodElement = methodElement
+                ).create()
+            )
+        }
 
         return typeSpecBuilder.addProperties(graph.getProperties()).build()
     }
