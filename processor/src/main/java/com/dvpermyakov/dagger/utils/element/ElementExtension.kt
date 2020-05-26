@@ -96,3 +96,15 @@ internal fun Element.getAnnotationElements(
         processingEnv.elementUtils.getAllTypeElements(classValue).first()
     } ?: throw IllegalStateException("$annotationClass element should contain a list of items")
 }
+
+internal fun Element.getAnnotationElementsOrEmpty(
+    processingEnv: ProcessingEnvironment,
+    annotationClass: Class<*>,
+    index: Int
+): List<Element> {
+    return try {
+        getAnnotationElements(processingEnv, annotationClass, index)
+    } catch (ignore: Throwable) {
+        emptyList()
+    }
+}

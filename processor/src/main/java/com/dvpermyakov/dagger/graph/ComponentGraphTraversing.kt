@@ -13,7 +13,9 @@ import javax.annotation.processing.ProcessingEnvironment
 import javax.inject.Inject
 import javax.inject.Singleton
 import javax.lang.model.element.Element
+import javax.lang.model.element.ElementKind
 import javax.lang.model.element.ExecutableElement
+import com.dvpermyakov.dagger.annotation.Module
 
 class ComponentGraphTraversing(private val processingEnv: ProcessingEnvironment) {
 
@@ -71,17 +73,12 @@ class ComponentGraphTraversing(private val processingEnv: ProcessingEnvironment)
         moduleElements
             .excludeInterfaces()
             .forEach { moduleElement ->
-                moduleElement.getMethodElements().forEach { methodElement ->
-                    addElementInModule(methodElement, moduleElement)
-                }
+                addModule(moduleElement)
             }
-
         moduleElements
             .interfacesOnly()
             .forEach { moduleElement ->
-                moduleElement.getMethodElements().forEach { methodElement ->
-                    addElementWithBinds(methodElement, moduleElement)
-                }
+                addModule(moduleElement)
             }
     }
 
@@ -114,6 +111,24 @@ class ComponentGraphTraversing(private val processingEnv: ProcessingEnvironment)
 
     fun getProperties(): List<PropertySpec> {
         return nodesProperty.values.toList()
+    }
+
+    private fun addModule(moduleElement: Element) {
+        if (moduleElement.kind == ElementKind.INTERFACE) {
+            moduleElement.getMethodElements().forEach { methodElement ->
+                addElementWithBinds(methodElement, moduleElement)
+            }
+        } else {
+            val includedModuleElements = moduleElement.getAnnotationElementsOrEmpty(processingEnv, Module::class.java, 0)
+            includedModuleElements.forEach { includedModuleElement ->
+                if (includedModuleElement.hasAnnotation(processingEnv, Module::class.java)) {
+                    addModule(includedModuleElement)
+                }
+            }
+            moduleElement.getMethodElements().forEach { methodElement ->
+                addElementInModule(methodElement, moduleElement)
+            }
+        }
     }
 
     private fun addElementInModule(methodElement: ExecutableElement, moduleElement: Element) {

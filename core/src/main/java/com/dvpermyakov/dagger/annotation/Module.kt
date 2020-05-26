@@ -1,5 +1,9 @@
 package com.dvpermyakov.dagger.annotation
 
+import kotlin.reflect.KClass
+
 @Target(AnnotationTarget.CLASS)
 @Retention(AnnotationRetention.RUNTIME)
-annotation class Module
+annotation class Module(
+    val includes: Array<KClass<*>> = []
+)

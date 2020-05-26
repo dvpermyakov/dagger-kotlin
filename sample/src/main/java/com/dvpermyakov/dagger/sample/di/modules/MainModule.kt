@@ -2,10 +2,11 @@ package com.dvpermyakov.dagger.sample.di.modules
 
 import com.dvpermyakov.dagger.annotation.Module
 import com.dvpermyakov.dagger.annotation.Provide
+import com.dvpermyakov.dagger.sample.data.Database
 import com.dvpermyakov.dagger.sample.domain.GlobalConfig
 import com.dvpermyakov.dagger.sample.domain.ProfileModel
 
-@Module
+@Module(includes = [DatabaseModule::class])
 class MainModule {
 
     @Provide
@@ -18,7 +19,7 @@ class MainModule {
     }
 
     @Provide
-    fun provideData(): ProfileModel {
+    fun provideData(database: Database): ProfileModel {
         return ProfileModel("profileId")
     }
 }
