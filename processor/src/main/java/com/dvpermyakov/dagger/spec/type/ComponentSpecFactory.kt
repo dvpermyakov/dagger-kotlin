@@ -79,22 +79,6 @@ class ComponentSpecFactory(
         graph.addDependencyElements(dependencyElements)
         graph.setModules(moduleElements)
 
-        moduleElements
-            .excludeInterfaces()
-            .forEach { moduleElement ->
-                moduleElement.getMethodElements().forEach { methodElement ->
-                    graph.addElementInModule(methodElement, moduleElement)
-                }
-            }
-
-        moduleElements
-            .interfacesOnly()
-            .forEach { moduleElement ->
-                moduleElement.getMethodElements().forEach { methodElement ->
-                    graph.addElementWithBinds(methodElement, moduleElement)
-                }
-            }
-
         componentElement
             .getMethodElements()
             .sortedBy { methodElement ->

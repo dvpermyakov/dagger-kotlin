@@ -25,16 +25,6 @@ class ComponentGraphTraversing(private val processingEnv: ProcessingEnvironment)
         alreadyInjectedNodes.addAll(classNames)
     }
 
-    fun setModules(moduleElements: List<Element>) {
-        moduleElements
-            .forEach { moduleElement ->
-                moduleElement.getMethodElements().forEach { methodElement ->
-                    val returnTypeElement = requireNotNull(methodElement.getReturnElement(processingEnv))
-                    moduleMethodMap[returnTypeElement] = methodElement
-                }
-            }
-    }
-
     fun addElementsWithBindsInstance(elements: List<Element>) {
         elements.map { element ->
             element.toClassName(processingEnv)
@@ -71,6 +61,31 @@ class ComponentGraphTraversing(private val processingEnv: ProcessingEnvironment)
         }
     }
 
+    fun setModules(moduleElements: List<Element>) {
+        moduleElements
+            .forEach { moduleElement ->
+                moduleElement.getMethodElements().forEach { methodElement ->
+                    val returnTypeElement = requireNotNull(methodElement.getReturnElement(processingEnv))
+                    moduleMethodMap[returnTypeElement] = methodElement
+                }
+            }
+        moduleElements
+            .excludeInterfaces()
+            .forEach { moduleElement ->
+                moduleElement.getMethodElements().forEach { methodElement ->
+                    addElementInModule(methodElement, moduleElement)
+                }
+            }
+
+        moduleElements
+            .interfacesOnly()
+            .forEach { moduleElement ->
+                moduleElement.getMethodElements().forEach { methodElement ->
+                    addElementWithBinds(methodElement, moduleElement)
+                }
+            }
+    }
+
     fun addElementWithInjectedConstructor(element: Element) {
         val className = element.toClassName(processingEnv)
         if (!alreadyInjectedNodes.contains(className) && !nodesProperty.containsKey(className)) {
@@ -94,7 +109,15 @@ class ComponentGraphTraversing(private val processingEnv: ProcessingEnvironment)
         }
     }
 
-    fun addElementInModule(methodElement: ExecutableElement, moduleElement: Element) {
+    fun getClassNames(): List<ClassName> {
+        return nodesProperty.keys.toList()
+    }
+
+    fun getProperties(): List<PropertySpec> {
+        return nodesProperty.values.toList()
+    }
+
+    private fun addElementInModule(methodElement: ExecutableElement, moduleElement: Element) {
         val moduleClassName = moduleElement.toClassName(processingEnv)
         val returnTypeElement = requireNotNull(methodElement.getReturnElement(processingEnv))
         val returnClassName = returnTypeElement.toClassName(processingEnv)
@@ -126,7 +149,7 @@ class ComponentGraphTraversing(private val processingEnv: ProcessingEnvironment)
         }
     }
 
-    fun addElementWithBinds(methodElement: ExecutableElement, moduleElement: Element) {
+    private fun addElementWithBinds(methodElement: ExecutableElement, moduleElement: Element) {
         val returnTypeElement = requireNotNull(methodElement.getReturnElement(processingEnv))
         val returnTypeClassName = returnTypeElement.toClassName(processingEnv)
 
@@ -147,13 +170,5 @@ class ComponentGraphTraversing(private val processingEnv: ProcessingEnvironment)
             ).create()
             nodesProperty[returnTypeClassName] = property
         }
-    }
-
-    fun getClassNames(): List<ClassName> {
-        return nodesProperty.keys.toList()
-    }
-
-    fun getProperties(): List<PropertySpec> {
-        return nodesProperty.values.toList()
     }
 }
