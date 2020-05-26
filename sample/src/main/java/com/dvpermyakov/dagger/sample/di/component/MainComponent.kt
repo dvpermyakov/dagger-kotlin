@@ -5,6 +5,8 @@ import com.dvpermyakov.dagger.annotation.Component
 import com.dvpermyakov.dagger.sample.data.DatabaseConfig
 import com.dvpermyakov.dagger.sample.data.NetworkConfig
 import com.dvpermyakov.dagger.sample.di.dependencies.DataDependencies
+import com.dvpermyakov.dagger.sample.di.dependencies.GlobalConfigDependencies
+import com.dvpermyakov.dagger.sample.di.dependencies.ProfileDependencies
 import com.dvpermyakov.dagger.sample.di.modules.DatabaseModule
 import com.dvpermyakov.dagger.sample.di.modules.MainModule
 import com.dvpermyakov.dagger.sample.di.modules.RepositoryModule
@@ -17,7 +19,7 @@ import com.dvpermyakov.dagger.sample.presentation.TransactionViewModel
     modules = [MainModule::class, DatabaseModule::class, RepositoryModule::class],
     dependencies = [DataDependencies::class]
 )
-interface MainComponent {
+interface MainComponent : ProfileDependencies, GlobalConfigDependencies {
 
     fun getSubcomponent(): MainSubcomponent
 

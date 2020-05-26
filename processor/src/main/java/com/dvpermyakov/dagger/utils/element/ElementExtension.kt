@@ -1,5 +1,6 @@
 package com.dvpermyakov.dagger.utils.element
 
+import com.dvpermyakov.dagger.utils.className.toElement
 import com.squareup.kotlinpoet.ClassName
 import javax.annotation.processing.ProcessingEnvironment
 import javax.lang.model.element.*
@@ -42,6 +43,18 @@ internal fun Element.getNestedInterfaces(): List<Element> {
     return enclosedElements
         .filter { enclosedElement ->
             enclosedElement.kind == ElementKind.INTERFACE
+        }
+}
+
+internal fun Element.getSuperInterfaces(
+    processingEnv: ProcessingEnvironment
+): List<Element> {
+    return processingEnv.typeUtils.directSupertypes(this.asType())
+        .filter { typeMirror ->
+            typeMirror != Object::class.java.toElement(processingEnv).asType()
+        }
+        .map { type ->
+            type.toElement(processingEnv)
         }
 }
 

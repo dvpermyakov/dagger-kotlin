@@ -41,17 +41,27 @@ class SubComponentSpecFactory(
         graph.addInjectedClassNames(componentInjectedClassNames)
         graph.addModules(moduleElements)
 
-        subcomponentElement
+        val subcomponentMethodElements = subcomponentElement
             .getMethodElements()
-            .map { methodElement ->
-                typeSpecBuilder.addFunction(
-                    ComponentFunSpecFactory(
-                        processingEnv = processingEnv,
-                        graph = graph,
-                        methodElement = methodElement
-                    ).create()
-                )
+            .sortedBy { methodElement ->
+                methodElement.getReturnElement(processingEnv)
+                    ?.hasAnnotation(processingEnv, Subcomponent::class.java)
             }
+        val superInterfacesMethodElements = subcomponentElement
+            .getSuperInterfaces(processingEnv)
+            .flatMap { superInterfaceElement ->
+                superInterfaceElement.getMethodElements()
+            }
+
+        (subcomponentMethodElements + superInterfacesMethodElements).forEach { methodElement ->
+            typeSpecBuilder.addFunction(
+                ComponentFunSpecFactory(
+                    processingEnv = processingEnv,
+                    graph = graph,
+                    methodElement = methodElement
+                ).create()
+            )
+        }
 
         return typeSpecBuilder.addProperties(graph.getProperties()).build()
     }
