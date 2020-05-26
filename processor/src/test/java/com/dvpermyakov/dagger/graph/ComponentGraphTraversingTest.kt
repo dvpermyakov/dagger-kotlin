@@ -103,6 +103,25 @@ class ComponentGraphTraversingTest {
             ),
             graph.getClassNames()
         )
+    }
+
+    @Test
+    fun moduleAndInjectedConstructorElement() {
+        val injectedConstructorElement =
+            SampleDataWithInjectedConstructorAndParameters::class.java.toElement(processingEnv)
+        val moduleElement = SampleModule::class.java.toElement(processingEnv)
+        val sampleDataOther = SampleDataOther::class.java.toElement(processingEnv)
+        graph.addElementsWithBindsInstance(listOf(sampleDataOther))
+        graph.addModules(listOf(moduleElement))
+        graph.addElementWithInjectedConstructor(injectedConstructorElement)
+        Assert.assertEquals(
+            listOf(
+                SampleDataOther::class.java.toClassName(),
+                SampleData::class.java.toClassName(),
+                SampleDataWithInjectedConstructorAndParameters::class.java.toClassName()
+            ), graph.getClassNames()
+        )
+
 
     }
 }
