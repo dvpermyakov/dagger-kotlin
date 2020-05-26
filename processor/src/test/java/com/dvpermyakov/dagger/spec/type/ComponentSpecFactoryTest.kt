@@ -139,7 +139,7 @@ class ComponentSpecFactoryTest {
                 |  private val sampleDataProvider: javax.inject.Provider<com.dvpermyakov.dagger.sample.SampleData> = com.dvpermyakov.dagger.sample.SampleModule_SampleData_Factory(sampleModule)
                 |
                 |  companion object {
-                |    fun create(): com.dvpermyakov.dagger.sample.SampleComponentWithModule = KDaggerSampleComponent(com.dvpermyakov.dagger.sample.SampleModule())
+                |    fun create(): com.dvpermyakov.dagger.sample.SampleComponentWithModule = KDaggerSampleComponent(sampleModule = com.dvpermyakov.dagger.sample.SampleModule())
                 |  }
                 |}
                 |""".trimMargin(),
@@ -191,7 +191,7 @@ class ComponentSpecFactoryTest {
                 |  override fun getData(): com.dvpermyakov.dagger.sample.SampleData = sampleDataProvider.get()
                 |
                 |  companion object {
-                |    fun create(): com.dvpermyakov.dagger.sample.SampleComponentWithSuperInterface = KDaggerSampleComponent(com.dvpermyakov.dagger.sample.SampleModule())
+                |    fun create(): com.dvpermyakov.dagger.sample.SampleComponentWithSuperInterface = KDaggerSampleComponent(sampleModule = com.dvpermyakov.dagger.sample.SampleModule())
                 |  }
                 |}
                 |""".trimMargin(),

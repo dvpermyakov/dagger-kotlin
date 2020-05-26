@@ -4,6 +4,7 @@ import com.dvpermyakov.dagger.sample.data.DatabaseConfig
 import com.dvpermyakov.dagger.sample.data.NetworkConfig
 import com.dvpermyakov.dagger.sample.di.component.KDaggerDependencyComponent
 import com.dvpermyakov.dagger.sample.di.dependencies.ConfigDependencies
+import com.dvpermyakov.dagger.sample.di.modules.MainModule
 import com.dvpermyakov.dagger.sample.domain.TransactionModel
 import org.junit.Assert
 import org.junit.Test
@@ -16,7 +17,8 @@ class DependencyComponentTest {
             configDependencies = object : ConfigDependencies {
                 override fun getNetworkConfig() = NetworkConfig()
                 override fun getDatabaseConfig() = DatabaseConfig()
-            }
+            },
+            mainModule = MainModule(10)
         )
         val transactions = component.getTransactionViewModel().findAllTransactions()
         Assert.assertEquals(
