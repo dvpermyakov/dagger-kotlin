@@ -1,5 +1,6 @@
 # Dependency injector library for Kotlin
 [![CircleCI](https://circleci.com/gh/dvpermyakov/dagger-kotlin/tree/master.svg?style=shield)](https://circleci.com/gh/dvpermyakov/dagger-kotlin/tree/master)
+[![Bintray](https://api.bintray.com/packages/dvpermyakov/maven/com.dvpermyakov.dagger-kotlin/images/download.svg)](https://bintray.com/dvpermyakov/maven/com.dvpermyakov.dagger-kotlin/_latestVersion)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 This library is very similar to [dagger-2](https://github.com/google/dagger) library, but it generates kotlin files `(*.kt)` instead of java files `(*.java)`. It uses `apt` to generate components and factories. 
@@ -110,5 +111,17 @@ class TransactionView {
     @Inject
     lateinit var accountViewModel: AccountViewModel
 
+}
+```
+
+Gradle: 
+```Groovy
+repositories {
+   maven {
+        url  "https://dl.bintray.com/dvpermyakov/maven" 
+    }
+}
+dependencies {
+   implementation 'com.dvpermyakov:dagger-kotlin:0.0.1'
 }
 ```
