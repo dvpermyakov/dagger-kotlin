@@ -1,4 +1,7 @@
 # Dependency injector library for Kotlin
+[![CircleCI](https://circleci.com/gh/dvpermyakov/dagger-kotlin/tree/master.svg?style=shield)](https://circleci.com/gh/dvpermyakov/dagger-kotlin/tree/master)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
 This library is very similar to [dagger-2](https://github.com/google/dagger) library, but it generates kotlin files `(*.kt)` instead of java files `(*.java)`. It uses `apt` to generate components and factories. 
 
 You can create a component interface with `modules` and `dependencies` fileds (`@Component.Factory` is optional):
