@@ -122,6 +122,6 @@ repositories {
     }
 }
 dependencies {
-   implementation 'com.dvpermyakov:dagger-kotlin:0.0.1'
+   implementation 'com.dvpermyakov:dagger-kotlin:0.0.2'
 }
 ```

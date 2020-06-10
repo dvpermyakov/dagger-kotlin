@@ -17,5 +17,35 @@ jobs:
           paths:
             - ~/.gradle
           key: v1-dependencies-{{ checksum "build.gradle.kts" }}
-      - run: ./gradlew processor:build
-      - run: ./gradlew sample:build
+      - run:
+          name: Build processor module
+          command: ./gradlew processor:build
+      - run:
+          name: Build sample module
+          command: ./gradlew sample:build
+      - run:
+          name: Increase version
+          command: |
+            git config --global user.name $GIT_USERNAME
+            git config --global user.email $GIT_USEREMAIL
+            git clone https://github.com/dvpermyakov/increment-version-bash.git
+            cd increment-version-bash/
+            chmod u+x ./increment.sh
+            ./increment.sh -r $CIRCLE_REPOSITORY -b $CIRCLE_BRANCH -m master -f version.txt
+      - run:
+          name: Publish Maven artifact
+          command: ./gradlew publish
+      - run:
+          name: Upload to Bintray
+          command: |
+            if [ "$CIRCLE_BRANCH" = "master" ]; then
+              ./gradlew bintrayUpload
+            fi
+      - store_artifacts:
+          path: build/repository
+          destination: repository
+      - store_artifacts:
+          path: build/reports
+          destination: reports
+      - store_test_results:
+          path: build/test-results
